@@ -1,6 +1,6 @@
 ########## IMPORTS ##########
 from CAA_class import _CAA
-from OAA_class import _OAA
+from OAA_class_adj import _OAA
 from RBOAA_class import _RBOAA
 from TSAA_class import _TSAA
 from synthetic_data_class import _synthetic_data
@@ -92,7 +92,7 @@ class AA:
                 print("\nThe synthetic data was successfully created! To use the data in an analysis, specificy the with_synthetic_data parameter as True.\n")
 
 
-    def analyse(self, K: int = 3, p: int = 6, n_iter: int = 1000, early_stopping: bool = True, model_type = "all", lr: float = 0.01, mute: bool = False, with_synthetic_data: bool = False, with_hot_start: bool = False):
+    def analyse(self, K: int = 3, p: int = 6, n_iter: int = 1000, early_stopping: bool = True, model_type = "all", lr: float = 0.01, mute: bool = False, with_synthetic_data: bool = False, with_hot_start: bool = False, alternating: bool = False, sigma_cap: bool = False):
         
         success = True
 
@@ -103,7 +103,7 @@ class AA:
         elif self._has_data and not with_synthetic_data:
             if model_type == "all" or model_type == "CAA":
                 self._results["CAA"].insert(0,self._CAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns,early_stopping=early_stopping))
-            elif model_type == "all" or model_type == "OAA":
+            elif model_type == "all" or model_type == "OAA": 
                 self._results["OAA"].insert(0,self._OAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns,with_synthetic_data=False,early_stopping=early_stopping))
             elif model_type == "all" or model_type == "RBOAA":
                 self._results["RBOAA"].insert(0,self._RBOAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns, with_synthetic_data=False, early_stopping=early_stopping, with_OAA_initialization = with_hot_start))
@@ -117,7 +117,11 @@ class AA:
             if model_type == "all" or model_type == "CAA":
                 self._synthetic_results ["CAA"].insert(0,self._CAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns, with_synthetic_data=True,early_stopping=early_stopping))
             elif model_type == "all" or model_type == "OAA":
-                self._synthetic_results["OAA"].insert(0,self._OAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns,with_synthetic_data=True,early_stopping=early_stopping,for_hotstart_usage=False))
+                if alternating:
+                    self._synthetic_results["OAA"].insert(0,self._OAA._compute_archetypes_alternating(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns, with_synthetic_data=True, early_stopping=early_stopping, for_hotstart_usage=False, sigma_cap=False))
+                    
+                else:
+                    self._synthetic_results["OAA"].insert(0,self._OAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns, with_synthetic_data=True, early_stopping=early_stopping, for_hotstart_usage=False, sigma_cap=False))
             elif model_type == "all" or model_type == "RBOAA":
                 self._synthetic_results["RBOAA"].insert(0,self._RBOAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns,with_synthetic_data=True,early_stopping=early_stopping,with_OAA_initialization = with_hot_start))
             elif model_type == "all" or model_type == "TSAA":

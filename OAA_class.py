@@ -16,8 +16,8 @@ class _OAA:
 
     ########## HELPER FUNCTION // EARLY STOPPING ##########
     def _early_stopping(self):
-        next_imp = self.loss[-round(len(self.loss)/100)]-self.loss[-1]
-        prev_imp = (self.loss[0]-self.loss[-1])*1e-5
+        next_imp = self.loss[-round(len(self.loss)/100)] - self.loss[-1]
+        prev_imp = (self.loss[0]-self.loss[-1]) * 1e-5
         return next_imp < prev_imp
 
     ########## HELPER FUNCTION // A AND B ##########
@@ -30,10 +30,16 @@ class _OAA:
         m = nn.Softmax(dim=0)
         return torch.cumsum(m(b), dim=0)[:len(b)-1]
 
-    ########## HELPER FUNCTION // SIGMA ##########
-    def _apply_constraints_sigma(self,sigma):
+    
+    def _apply_constraints_sigma(self, sigma, sigma_cap):
+        
         m = nn.Softplus()
+        # if sigma_cap and len(torch.gt(m(sigma), 1e-04)[torch.gt(m(sigma),1e-04)]) > 0: # check if softplus(sigma) > 1e-04
+        #     with torch.no_grad():
+        #         sigma[:] = sigma.clamp(-20.0, -6.9075) #softplus(-6.9) = 0.0001
+        
         return m(sigma)
+    
 
     ########## HELPER FUNCTION // ALPHA ##########
     def _calculate_alpha(self,b):
@@ -73,12 +79,12 @@ class _OAA:
         return loss
 
     ########## HELPER FUNCTION // ERROR ##########
-    def _error(self,Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint):
+    def _error(self,Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint, sigma_cap):
 
         A = self._apply_constraints_AB(A_non_constraint)
         B = self._apply_constraints_AB(B_non_constraint)
         b = self._apply_constraints_beta(b_non_constraint)
-        sigma = self._apply_constraints_sigma(sigma_non_constraint)
+        sigma = self._apply_constraints_sigma(sigma_non_constraint, sigma_cap)
         alphas = self._calculate_alpha(b)
         
         X_tilde = self._calculate_X_tilde(Xt,alphas)
@@ -101,7 +107,8 @@ class _OAA:
         columns, 
         with_synthetic_data = False, 
         early_stopping = False, 
-        for_hotstart_usage = False):
+        for_hotstart_usage = False,
+        sigma_cap = False):
 
 
         ########## INITIALIZATION ##########
@@ -113,7 +120,7 @@ class _OAA:
         A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
         B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
         b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
-        sigma_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
+        sigma_non_constraint = torch.autograd.Variable(torch.rand(1)*(-5), requires_grad=True)
 
         optimizer = optim.Adam([A_non_constraint, 
                                 B_non_constraint, 
@@ -129,7 +136,7 @@ class _OAA:
             if not mute:
                 loading_bar._update()
             optimizer.zero_grad()
-            L = self._error(Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint)
+            L = self._error(Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint, sigma_cap)
             self.loss.append(L.detach().numpy())
             L.backward()
             optimizer.step()
@@ -151,7 +158,7 @@ class _OAA:
         alphas_f = self._calculate_alpha(b_f)
         X_tilde_f = self._calculate_X_tilde(Xt,alphas_f).detach().numpy()
         Z_tilde_f = (self._apply_constraints_AB(B_non_constraint).detach().numpy() @ X_tilde_f)
-        sigma_f = self._apply_constraints_sigma(sigma_non_constraint).detach().numpy()
+        sigma_f = self._apply_constraints_sigma(sigma_non_constraint, sigma_cap=False).detach().numpy()
         X_hat_f = self._calculate_X_hat(X_tilde_f,A_f,B_f)
         end = timer()
         time = round(end-start,2)
@@ -191,3 +198,5 @@ class _OAA:
             sigma_non_constraint_np = sigma_non_constraint.detach().numpy()
             b_non_constraint_np = b_non_constraint.detach().numpy()
             return A_non_constraint_np, B_non_constraint_np, sigma_non_constraint_np, b_non_constraint_np
+    
+    
