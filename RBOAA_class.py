@@ -54,7 +54,6 @@ class _RBOAA:
     
     ########## HELPER FUNCTION // LOSS ##########
     def _calculate_loss(self,Xt, X_hat, b, sigma):
-
         z_next = (torch.gather(b,1,Xt)-X_hat)/sigma
         z_prev = (torch.gather(b,1,Xt-1)-X_hat)/sigma
         z_next[Xt == len(b[0,:])+1] = np.inf

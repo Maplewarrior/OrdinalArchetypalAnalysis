@@ -156,9 +156,9 @@ class _OAA:
             L = self._error(Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint, c1_non_constraint, c2, sigma_cap)
             self.loss.append(L.detach().numpy())
             L.backward()
-            ### WHY DOES THIS WORK HAHA ###
+            ### Avioid exploding gradients ###
             clip=10
-            torch.nn.utils.clip_grad_norm([A_non_constraint, 
+            torch.nn.utils.clip_grad_norm_([A_non_constraint, 
                                       B_non_constraint, 
                                       b_non_constraint, 
                                       sigma_non_constraint, 
@@ -243,9 +243,9 @@ class _OAA:
             sigma_cap = False):
             
             ########## INITIALIZATION ##########
-            print("Beginning initialization")
-            A_np, B_np, sigma_np, b_np, c1_np, c2_np = self._compute_archetypes(X, K, p, n_iter, lr, mute=False, columns=columns, with_synthetic_data=with_synthetic_data, early_stopping=True, for_hotstart_usage=True, sigma_cap=True)
-            print("Initialization finished!")
+            
+            A_np, B_np, sigma_np, b_np, c1_np, c2_np = self._compute_archetypes(X, K, p, n_iter=1000, lr=lr, mute=mute, columns=columns, with_synthetic_data=with_synthetic_data, early_stopping=True, for_hotstart_usage=True, sigma_cap=True)
+            
             
             self.N, self.M = len(X.T), len(X.T[0,:])
             Xt = torch.tensor(X.T, dtype = torch.long)
