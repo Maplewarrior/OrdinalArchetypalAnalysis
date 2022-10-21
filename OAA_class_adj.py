@@ -34,9 +34,9 @@ class _OAA:
     def _apply_constraints_sigma(self, sigma, sigma_cap):
         
         m = nn.Softplus()
-        if sigma_cap and len(torch.gt(m(sigma), 1e-04)[torch.gt(m(sigma),1e-04)]) > 0: # check if softplus(sigma) > 1e-04
+        if sigma_cap and len(torch.lt(m(sigma), 1e-03)[torch.lt(m(sigma),1e-03)]) > 0: # check if softplus(sigma) > 1e-04
             with torch.no_grad():
-                sigma[:] = sigma.clamp(-20.0, -6.9075) #softplus(-6.9) = 0.0001
+                sigma[:] = sigma.clamp(-6.9, 1000) #softplus(-6.9) = 0.001
 
         return m(sigma)
     
@@ -134,7 +134,7 @@ class _OAA:
         A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
         B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
         b_non_constraint = torch.autograd.Variable(torch.rand(p+1), requires_grad=True)
-        sigma_non_constraint = torch.autograd.Variable(torch.rand(1)*(-5), requires_grad=True)
+        sigma_non_constraint = torch.autograd.Variable(torch.rand(1)*250, requires_grad=True)
         c1_non_constraint = torch.autograd.Variable(torch.rand(1)*(-2), requires_grad=True)
         c2 = torch.autograd.Variable(torch.rand(1), requires_grad=True)
         optimizer = optim.Adam([A_non_constraint, 
@@ -244,8 +244,7 @@ class _OAA:
             
             ########## INITIALIZATION ##########
             
-            A_np, B_np, sigma_np, b_np, c1_np, c2_np = self._compute_archetypes(X, K, p, n_iter=1000, lr=lr, mute=mute, columns=columns, with_synthetic_data=with_synthetic_data, early_stopping=True, for_hotstart_usage=True, sigma_cap=True)
-            
+            A_np, B_np, sigma_np, b_np, c1_np, c2_np = self._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data=with_synthetic_data, early_stopping=True, for_hotstart_usage=True, sigma_cap=True)
             
             self.N, self.M = len(X.T), len(X.T[0,:])
             Xt = torch.tensor(X.T, dtype = torch.long)

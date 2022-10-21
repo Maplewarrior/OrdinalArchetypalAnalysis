@@ -114,7 +114,7 @@ class _RBOAA:
             # if not mute:
             #     print("\nPerforming OAA for initialization of RBOAA.")
             OAA = _OAA()
-            A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes_alternating(X, K, p, n_iter=1000, lr=0.01, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, early_stopping = early_stopping, for_hotstart_usage=True)
+            A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes_alternating(X, K, p, n_iter=3000, lr=0.05, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, early_stopping = early_stopping, for_hotstart_usage=True)
             A_non_constraint = torch.autograd.Variable(torch.tensor(A_hot), requires_grad=True)
             B_non_constraint = torch.autograd.Variable(torch.tensor(B_hot), requires_grad=True)
             # sigma_non_constraint = torch.autograd.Variable(torch.tensor(sigma_hot).repeat(self.N,1), requires_grad=True)
@@ -122,8 +122,10 @@ class _RBOAA:
             c1_non_constraint = torch.autograd.Variable(torch.tensor(c1_hot), requires_grad=True)
             c2 = torch.autograd.Variable(torch.tensor(c2_hot), requires_grad=True)
             
+            # Optimize on a single global sigma if True
             if for_hotstart_usage:
                 sigma_non_constraint = torch.autograd.Variable(torch.tensor(sigma_hot), requires_grad=True)
+            # Optimize on one sigma per subject
             else:
                 sigma_non_constraint = torch.autograd.Variable(torch.tensor(sigma_hot).repeat(self.N,1), requires_grad=True)
         else:

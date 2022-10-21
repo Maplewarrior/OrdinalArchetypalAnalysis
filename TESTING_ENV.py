@@ -9,103 +9,131 @@ import matplotlib.pyplot as plt
 import numpy as np
 from eval_measures import NMI, MCC
 
-N, M = 10000, 15
+
+""" Define parameters:
+    - N:         Respondents, M = questions
+    - K:         Number of archetypes
+    - p:         Number of points on likert scale in synthetic data 
+    - a_param:   Affects the weighting of archetypes on respondents
+    - b_param:   Affects the response bias in the synthetic data, low value --> high RB
+    - sigma:     Noise parameter, high value --> high noise
+    - sigma_dev: Determines the variation in sigma when modelled on each individual
+    - rb:        Boolean, whether to have response bias in synthetic data  """
+    
+N, M = 2500, 12
 K = 3
-p = 5
+p = 6
 a_param = 1
 b_param = 5
-sigma = -8
-sigmas = [-10, -5, -3, -1]
-
-sigma_dev = 0.25
+sigma = -2.2
+sigmas = [-2.2, -1.5, -1.05, -0.4002] 
+sigma_dev = 0.0
 rb = True
 n_iter = 5000
-mute=False
-
+mute=True
 lr = 0.01
 
-syn = _synthetic_data(N, M, K, p, sigma, rb, a_param, b_param, sigma_std=sigma_dev)
-columns = syn.columns
 
-OAA = _OAA()
-RBOAA = _RBOAA()
-OAA_old = _OAA_old()
-RBOAA_old = _RBOAA_old()
+def compareApproaches(n_repeats):
+    
+    OAA = _OAA()
+    RBOAA = _RBOAA()
+    RBOAA_old = _RBOAA_old()
+    
+    RB_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
+              'MCC': np.empty((n_repeats, len(sigmas)))}
+    
+    RB_old_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
+              'MCC': np.empty((n_repeats, len(sigmas)))}
+    
+    OAA_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
+              'MCC': np.empty((n_repeats, len(sigmas)))}
 
-NMIs = []
-MCCs = []
-
-NMI_old = []
-MCC_old = []
-
-#%%
-# RB = RBOAA._compute_archetypes_alternating(syn.X, K, p, n_iter, lr, mute, columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True)
-# print("Alternating archetypal analysis")
-# print("NMI: ", NMI(syn.A, RB.A))
-# print("MCC: ", MCC(syn.Z, RB.Z))
-
-# RB_old = RBOAA_old._compute_archetypes(syn.X, K, p, n_iter, lr, mute, columns, with_synthetic_data=True, with_OAA_initialization=True, early_stopping=True)
-# print("NMI old: ", NMI(syn.A, RB_old.A))
-# print("MCC old: ", MCC(syn.Z, RB_old.Z))
-
-# print("Old archetypal analysis:")
-# result_old = OAA_old._compute_archetypes(syn.X, K, p, lr=0.01, n_iter=n_iter, mute=mute, columns=columns, early_stopping=True)
-
-
-#%%
-reps = 3
-NMIs = np.empty((reps, len(sigmas)))
-MCCs = np.empty((reps, len(sigmas)))
-
-NMI_old = np.empty((reps, len(sigmas)))
-MCC_old = np.empty((reps, len(sigmas)))
-
-
-sigmas_c = [np.log(1+np.exp(s)) for s in sigmas]
-
-
-for i, sigma in enumerate(sigmas):
-    syn = _synthetic_data(N, M, K, p, sigma, rb, a_param, b_param, sigma_std=sigma_dev)
-    columns = syn.columns
-    for rep in range(reps):
-
-        # result_alt = OAA._compute_archetypes_alternating(syn.X, K, p, n_iter, lr, mute, columns, sigma_cap=False, early_stopping=True) 
+    
+    for idx, s in enumerate(sigmas):
+        print("iter no:", idx)
         
-        RB = RBOAA._compute_archetypes_alternating(syn.X, K, p, n_iter, lr, mute, columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True)
-        NMIs[rep,i] = NMI(syn.A, RB.A)
-        MCCs[rep,i] = MCC(syn.Z, RB.Z)
+        syn = _synthetic_data(N, M, K, p, sigma, rb, a_param, b_param, sigma_std=sigma_dev)
+        columns = syn.columns
         
-        # result_old = OAA_old._compute_archetypes(syn.X, K, p, lr=0.01, n_iter=n_iter, mute=mute, columns=columns, early_stopping=True)
-        RB_old = RBOAA_old._compute_archetypes(syn.X, K, p, n_iter, lr, mute, columns, with_synthetic_data=True, with_OAA_initialization=False, early_stopping=True)
-        
-        NMI_old[rep,i] = NMI(syn.A, RB_old.A)
-        MCC_old[rep,i] = MCC(syn.Z, RB_old.Z)
+        for i in range(n_repeats):
+            
+            ### Compute NMI/MCC for alternating RBOAA ###
+            RB = RBOAA._compute_archetypes_alternating(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True)
+            RB_res['NMI'][i][idx] = NMI(syn.A, RB.A)
+            RB_res['MCC'][i][idx] = MCC(syn.Z, RB.Z)
+            
+            #### Compute NMI/MCC for old RBOAA ###
+            RB_old = RBOAA_old._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data=True, with_OAA_initialization=True, early_stopping=True)
+            RB_old_res['NMI'][i][idx] = NMI(syn.A, RB_old.A)
+            RB_old_res['MCC'][i][idx] = MCC(syn.Z, RB_old.Z)
+            
+            ### Compute NMI/MCC for OAA ###
+            O =  OAA._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, early_stopping=True)
+            OAA_res['NMI'][i][idx] = NMI(syn.A, O.A)
+            OAA_res['NMI'][i][idx]= MCC(syn.Z, O.Z)
+            
+            
+    return RB_res, RB_old_res, OAA_res
+            
+            
+            
+            
+def plot_results(sigmas, result, title):
+    
+    sigmas_c = [np.log(1+np.exp(s)) for s in sigmas]
+    
+    fig, ax = plt.subplots(2, 1, sharex=True)
     
     
-# print("Alternating archetypal analysis")
-# print("NMI: ", NMI(syn.A, result_alt.A))
-# print("MCC: ", MCC(syn.Z, result_alt.Z))
+    
+    NMIs = np.mean(result['NMI'],axis=0)
+    MCCs = np.mean(result['MCC'], axis=0)
+    ax[0].plot(sigmas_c, NMIs)
+    ax[0].set_title('NMI plot')
+    ax[0].set_ylabel('NMI')
+    
+      
+    # ax[0].boxplot(result['NMI'], positions=sigmas_c, notch=True)
+    
+    
+    ax[1].plot(sigmas_c, MCCs)
+    ax[1].set_title('MCC plot')
+    ax[1].set_ylabel('MCC')
+    
+    # ax[1].boxplot(result['MCC'], positions=sigmas_c, notch=True)
+    
+    # ax[1].title('MCC plot')
+    fig.supxlabel('true sigma')
+    # ax[0].xticks(locs)
+    plt.show()
+    
+    
+    
+            
+#%%
+RB_r, RB_old_r, OAA_r = compareApproaches(5)
 
-# print("Old archetypal analysis:")
-# result_old = OAA_old._compute_archetypes(syn.X, K, p, lr=0.01, n_iter=n_iter, mute=mute, columns=columns, early_stopping=True)
-# print("NMI old: ", NMI(syn.A, result_old.A))
-# print("MCC old: ", MCC(syn.Z, result_old.Z))
 
 
+
+
+
+    
+#%%
+# print("1st plot = alternating RBOAA")
+# print("2nd plot = Old RBOAA")
+# print("3rd plot = OAA")
+
+
+# dummy = {'NMI':np.array([[0.9, 0.85, 0.82, 0.85],[0.65, 0.54, 0.45, 0.14]]),
+#          'MCC':np.array([[0.9, 0.83, 0.82, 0.55],[0.76, 0.65, 0.67,0.55]])}
+
+# plot_results(sigmas, dummy, "dummy")
+# print(np.mean(dummy['NMI'], axis=0))
 #%%
 
-print("ALTERNATING ANALYSIS:")
-print("NMI:\n")
-print(NMIs)
-print("MCC:\n")
-print(MCCs)
+plot_results(sigmas, RB_r)
+plot_results(sigmas, RB_old_r)
+plot_results(sigmas, OAA_r)
 
-
-print("OLD OAA:")
-print("NMI")
-print(NMI_old)
-print("MCC\n", MCC_old)
-# result = OAA._compute_archetypes(syn.X, K, p, n_iter, lr, mute, columns, sigma_cap=False, early_stopping=True) 
-
-# print(result.loss)
-print("sigma vals: \n", sigmas_c)

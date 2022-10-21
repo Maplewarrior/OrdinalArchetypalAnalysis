@@ -8,6 +8,7 @@ from scipy.special import softmax
 from AA_result_class import _CAA_result
 from loading_bar_class import _loading_bar
 
+
 class _TSAA:
     
     def _logOdds(self, X):
@@ -19,15 +20,16 @@ class _TSAA:
 
         return logvals
     
-    def _applySoftmax(self,M):
-        return softmax(M)
+    def _applyPhiConstraints(self,M):
+        out = softmax(M)     
+        return np.cumsum(out)
     
     def _convertScores(self, X):
         
         Ordinals = range(int(min(X.flatten())), int(max(X.flatten()+1)))
-        thetas = self._applySoftmax(self._logOdds(X))
-        scores = [1+((k+1)-1)*thetas[k] for k in range(len(Ordinals))]
-        
+        phis = self._applyPhiConstraints(self._logOdds(X))
+        scores = [1+(4-1)*phis[k] for k in range(len(Ordinals))]
+
         return scores
         
     def _projectOrdinals(self, X):
@@ -37,6 +39,11 @@ class _TSAA:
         
         scores = self._convertScores(X)
         
+        scores = [1, scores[0], scores[1], 4]
+        
+        # scores_f = []
+        
+
         for i in range(M):
             for j in range(N):
                 idx = X[i,j]-1
@@ -45,7 +52,9 @@ class _TSAA:
     
     def _error(self, X,B,A):
         return torch.norm(X - X@B@A, p='fro')**2
-    
+
+
+
     def _apply_constraints(self, A):
         m = nn.Softmax(dim=0)
         return m(A)
@@ -102,4 +111,39 @@ class _TSAA:
             result._print()
 
         return result
-    
+
+#%%
+
+data_org = pd.read_csv('TSAA_data/TSAA_original_data.csv')
+data_gt = pd.read_csv('TSAA_data/TSAA_new_scale.csv')
+X_gt = data_gt.to_numpy()[:,1:]
+TSAA = _TSAA()
+
+X = data_org.to_numpy()[:, 1:] # remove indexing columns
+Xt = torch.tensor(X)
+
+
+
+LO = TSAA._logOdds(X)
+
+
+LO = softmax(LO)
+
+
+X_new = TSAA._projectOrdinals(X)
+
+found_scale = np.unique(X_new)
+gt_scale = np.unique(X_gt)
+
+print("found scale:", found_scale)
+print("true scale: ", gt_scale)
+
+
+
+#%%
+"""
+
+
+"""
+
+
