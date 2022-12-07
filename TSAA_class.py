@@ -135,15 +135,4 @@ X_new = TSAA._projectOrdinals(X)
 found_scale = np.unique(X_new)
 gt_scale = np.unique(X_gt)
 
-print("found scale:", found_scale)
-print("true scale: ", gt_scale)
-
-
-
-#%%
-"""
-
-
-"""
-
 

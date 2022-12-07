@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from timeit import default_timer as timer
+import numpy as np
 
 from loading_bar_class import _loading_bar
 from AA_result_class import _CAA_result
@@ -12,10 +13,11 @@ from AA_result_class import _CAA_result
 class _CAA:
 
     ########## HELPER FUNCTION // EARLY STOPPING ##########
-    def _early_stopping(self):
-        next_imp = self.RSS[-round(len(self.RSS)/100)]-self.RSS[-1]
-        prev_imp = (self.RSS[0]-self.RSS[-1])*1e-5
-        return next_imp < prev_imp
+    def _early_stopping(self,i):
+        last_avg = np.mean(self.RSS[-200:-100])
+        current_avg = np.mean(self.RSS[-100:])
+        total_imp = (self.RSS[-(i-1)]-self.RSS[-1])
+        return (last_avg-current_avg) < total_imp*1e-5
 
     ########## HELPER FUNCTION // CALCULATE ERROR FOR EACH ITERATION ##########
     def _error(self, X,B,A):
@@ -41,7 +43,6 @@ class _CAA:
         optimizer = optim.Adam([A, B], amsgrad = True, lr = lr)
         
 
-
         ########## ANALYSIS ##########
         for i in range(n_iter):
             if not mute:
@@ -54,7 +55,7 @@ class _CAA:
 
             ########## EARLY STOPPING ##########
             if i % 25 == 0 and early_stopping:
-                if len(self.RSS) > 200 and self._early_stopping():
+                if len(self.RSS) > 200 and self._early_stopping(i):
                     if not mute:
                         loading_bar._kill()
                         print("Analysis ended due to early stopping.\n")

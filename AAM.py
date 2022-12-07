@@ -1,6 +1,7 @@
 ########## IMPORTS ##########
+from turtle import back
 from CAA_class import _CAA
-from OAA_class_adj import _OAA
+from OAA_class import _OAA
 from RBOAA_class import _RBOAA
 from TSAA_class import _TSAA
 from synthetic_data_class import _synthetic_data
@@ -92,7 +93,7 @@ class AA:
                 print("\nThe synthetic data was successfully created! To use the data in an analysis, specificy the with_synthetic_data parameter as True.\n")
 
 
-    def analyse(self, K: int = 3, p: int = 6, n_iter: int = 1000, early_stopping: bool = True, model_type = "all", lr: float = 0.01, mute: bool = False, with_synthetic_data: bool = False, with_hot_start: bool = False, alternating: bool = False, sigma_cap: bool = False):
+    def analyse(self, K: int = 3, p: int = 6, n_iter: int = 1000, early_stopping: bool = True, itteration_backup: bool = False, model_type = "all", lr: float = 0.01, mute: bool = False, with_synthetic_data: bool = False, with_hot_start: bool = False, beta_regulators: bool = False, alternating: bool = False):
         
         success = True
 
@@ -104,9 +105,9 @@ class AA:
             if model_type == "all" or model_type == "CAA":
                 self._results["CAA"].insert(0,self._CAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns,early_stopping=early_stopping))
             elif model_type == "all" or model_type == "OAA": 
-                self._results["OAA"].insert(0,self._OAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns,with_synthetic_data=False,early_stopping=early_stopping))
+                self._results["OAA"].insert(0,self._OAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns,with_synthetic_data=False, with_CAA_initialization=with_hot_start, early_stopping=early_stopping,backup_itterations=itteration_backup,alternating=alternating,beta_regulators=beta_regulators))
             elif model_type == "all" or model_type == "RBOAA":
-                self._results["RBOAA"].insert(0,self._RBOAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns, with_synthetic_data=False, early_stopping=early_stopping, with_OAA_initialization = with_hot_start))
+                self._results["RBOAA"].insert(0,self._RBOAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns, with_synthetic_data=False, early_stopping=early_stopping, with_OAA_initialization = with_hot_start,alternating=alternating,beta_regulators=beta_regulators,backup_itterations=itteration_backup))
             elif model_type == "all" or model_type == "TSAA":
                 self._results["TSAA"].insert(0,self._TSAA._compute_archetypes(self.X, K, p, n_iter, lr, mute,self.columns,early_stopping=early_stopping))
             else:
@@ -117,13 +118,9 @@ class AA:
             if model_type == "all" or model_type == "CAA":
                 self._synthetic_results ["CAA"].insert(0,self._CAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns, with_synthetic_data=True,early_stopping=early_stopping))
             elif model_type == "all" or model_type == "OAA":
-                if alternating:
-                    self._synthetic_results["OAA"].insert(0,self._OAA._compute_archetypes_alternating(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns, with_synthetic_data=True, early_stopping=early_stopping, for_hotstart_usage=False, sigma_cap=False))
-                    
-                else:
-                    self._synthetic_results["OAA"].insert(0,self._OAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns, with_synthetic_data=True, early_stopping=early_stopping, for_hotstart_usage=False, sigma_cap=False))
+                self._synthetic_results["OAA"].insert(0,self._OAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns,with_synthetic_data=True, with_CAA_initialization=with_hot_start, early_stopping=early_stopping,backup_itterations=itteration_backup,alternating=alternating,beta_regulators=beta_regulators))
             elif model_type == "all" or model_type == "RBOAA":
-                self._synthetic_results["RBOAA"].insert(0,self._RBOAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns,with_synthetic_data=True,early_stopping=early_stopping,with_OAA_initialization = with_hot_start))
+                self._synthetic_results["RBOAA"].insert(0,self._RBOAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns,with_synthetic_data=True,early_stopping=early_stopping,with_OAA_initialization = with_hot_start,alternating=alternating,beta_regulators=beta_regulators,backup_itterations=itteration_backup))
             elif model_type == "all" or model_type == "TSAA":
                 self._synthetic_results["TSAA"].insert(0,self._TSAA._compute_archetypes(self._synthetic_data.X, K, p, n_iter, lr, mute, self._synthetic_data.columns,with_synthetic_data=True,early_stopping=early_stopping))
             else:
@@ -143,6 +140,7 @@ class AA:
             model_type: str = "CAA", 
             plot_type: str = "PCA_scatter_plot", 
             title: str = "",
+            mute: bool = False,
             save_figure: bool = False,
             filename: str = "figure",
             result_number: int = 0, 
@@ -178,7 +176,8 @@ class AA:
                 if save_figure:
                     print("\nThe requested plot was successfully saved to your device!\n")
                 else:
-                    print("\nThe requested plot was successfully plotted!\n")
+                    if not mute:
+                        print("\nThe requested plot was successfully plotted!\n")
         
         else:
             if result_number < 0 or not result_number < len(self._synthetic_results[model_type]):
@@ -192,7 +191,8 @@ class AA:
             else:
                 result = self._synthetic_results[model_type][result_number]
                 result._plot(plot_type,attributes,archetype_number,types,weighted,subject_indexes,attribute_indexes, self.archetype_dataframe,save_figure,filename,title)
-                print("\nThe requested synthetic data result plot was successfully plotted!\n")
+                if not mute:
+                    print("\nThe requested synthetic data result plot was successfully plotted!\n")
 
 
     def save_analysis(self,filename: str = "analysis",model_type: str = "CAA", result_number: int = 0, with_synthetic_data: bool = False, save_synthetic_data: bool = True):

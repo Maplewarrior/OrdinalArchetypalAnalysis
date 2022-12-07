@@ -1,7 +1,5 @@
-from OAA_class_adj import _OAA
-from RBOAA_class_adj import _RBOAA
-
-from OAA_class_old import _OAA as _OAA_old
+from OAA_class import _OAA
+from RBOAA_class import _RBOAA
 from RBOAA_class_old import _RBOAA as _RBOAA_old
 from synthetic_data_class import _synthetic_data
 
@@ -21,13 +19,13 @@ from eval_measures import NMI, MCC
     - rb:        Boolean, whether to have response bias in synthetic data  """
     
 N, M = 2500, 12
-K = 3
+K = 5
 p = 6
-a_param = 1
+a_param = 0.85
 b_param = 5
-sigma = -2.2
-sigmas = [-2.2, -1.5, -1.05, -0.4002] 
-sigma_dev = 0.0
+#sigmas = [-2.2, -1.5, -1.05, -0.4002] 
+sigmas = [-1.5,-1.05] 
+sigma_dev = 1
 rb = True
 n_iter = 5000
 mute=True
@@ -45,41 +43,59 @@ def compareApproaches(n_repeats):
     
     RB_old_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
               'MCC': np.empty((n_repeats, len(sigmas)))}
+
+    RB_old_script_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
+              'MCC': np.empty((n_repeats, len(sigmas)))}
     
     OAA_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
               'MCC': np.empty((n_repeats, len(sigmas)))}
 
+    OAA_old_res = {'NMI': np.empty((n_repeats, len(sigmas))), 
+              'MCC': np.empty((n_repeats, len(sigmas)))}
+
+
     
     for idx, s in enumerate(sigmas):
-        print("iter no:", idx)
+        print("sigma no:", idx)
         
-        syn = _synthetic_data(N, M, K, p, sigma, rb, a_param, b_param, sigma_std=sigma_dev)
+        syn = _synthetic_data(N, M, K, p, s, rb, a_param, b_param, sigma_std=sigma_dev)
         columns = syn.columns
         
         for i in range(n_repeats):
+            print("rep no:", i)
             
             ### Compute NMI/MCC for alternating RBOAA ###
-            RB = RBOAA._compute_archetypes_alternating(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True)
+            RB = RBOAA._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True, alternating=True)
             RB_res['NMI'][i][idx] = NMI(syn.A, RB.A)
             RB_res['MCC'][i][idx] = MCC(syn.Z, RB.Z)
-            
+
+            ### Compute NMI/MCC for alternating RBOAA ###
+            RB_old_script = RBOAA_old._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True)
+            RB_old_script_res['NMI'][i][idx] = NMI(syn.A, RB_old_script.A)
+            RB_old_script_res['MCC'][i][idx] = MCC(syn.Z, RB_old_script.Z)
+
             #### Compute NMI/MCC for old RBOAA ###
-            RB_old = RBOAA_old._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data=True, with_OAA_initialization=True, early_stopping=True)
-            RB_old_res['NMI'][i][idx] = NMI(syn.A, RB_old.A)
-            RB_old_res['MCC'][i][idx] = MCC(syn.Z, RB_old.Z)
+            #RB_old = RBOAA._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_OAA_initialization=True, early_stopping=True, with_synthetic_data = True, alternating=False)
+            #RB_old_res['NMI'][i][idx] = NMI(syn.A, RB_old.A)
+            #RB_old_res['MCC'][i][idx] = MCC(syn.Z, RB_old.Z)
             
             ### Compute NMI/MCC for OAA ###
-            O =  OAA._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, early_stopping=True)
-            OAA_res['NMI'][i][idx] = NMI(syn.A, O.A)
-            OAA_res['NMI'][i][idx]= MCC(syn.Z, O.Z)
+            #O =  OAA._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, early_stopping=True, alternating=True)
+            #OAA_res['NMI'][i][idx] = NMI(syn.A, O.A)
+            #OAA_res['MCC'][i][idx]= MCC(syn.Z, O.Z)
+
+            ### Compute NMI/MCC for OAA ###
+            #O_old =  OAA._compute_archetypes(syn.X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, early_stopping=True,alternating=False)
+            #OAA_old_res['NMI'][i][idx] = NMI(syn.A, O_old.A)
+            #OAA_old_res['MCC'][i][idx]= MCC(syn.Z, O_old.Z)
             
             
-    return RB_res, RB_old_res, OAA_res
+    return RB_res, RB_old_res, RB_old_script_res, OAA_res, OAA_old_res
             
             
             
             
-def plot_results(sigmas, result, title):
+def plot_results(sigmas, result):
     
     sigmas_c = [np.log(1+np.exp(s)) for s in sigmas]
     
@@ -112,7 +128,7 @@ def plot_results(sigmas, result, title):
     
             
 #%%
-RB_r, RB_old_r, OAA_r = compareApproaches(5)
+RB_r, RB_old_r, RB_old_script_res, OAA_r, OAA_old_r = compareApproaches(2)
 
 
 
@@ -133,7 +149,20 @@ RB_r, RB_old_r, OAA_r = compareApproaches(5)
 # print(np.mean(dummy['NMI'], axis=0))
 #%%
 
+print("RBOAA NEW")
+print(RB_r)
+print("RBOAA OLD SCRIPT")
+print(RB_old_script_res)
+print("RBOAA OLD")
+print(RB_old_r)
+print("OAA NEW")
+print(OAA_r)
+print("OAA OLD")
+print(OAA_old_r)
+
 plot_results(sigmas, RB_r)
+plot_results(sigmas, RB_old_script_res)
 plot_results(sigmas, RB_old_r)
 plot_results(sigmas, OAA_r)
+plot_results(sigmas, OAA_old_r)
 
