@@ -28,7 +28,7 @@ def result_helper_function(params):
     if params[4]:
         analysis_archs = np.arange(2,11)
     else:
-        analysis_archs = [5]
+        analysis_archs = [synthetic_arch] # set n_archetypes in analysis equal to "true" number
 
     AA_types_list = []
     analysis_archs_list = []
@@ -55,14 +55,30 @@ def result_helper_function(params):
             lr = 0.1
         else:
             lr = 0.01
+        
         for analysis_arch in analysis_archs:
             for rep in range(reps):
 
-                AA_types_list.append(AA_type)
+                AA_types_list.append(analysis_type)
                 analysis_archs_list.append(analysis_arch)
                 reps_list.append(rep)
 
-                AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p)
+                if 'betareg' in analysis_type:
+                    AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p, beta_regulators=True)
+                
+                elif 'alternating' in analysis_type:
+                    AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p, alternating = True)
+                
+                elif 'hotstart' in analysis_type:
+                    AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p)
+                
+                elif 'Alternating_Betareg' in analysis_type:
+                    AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p, alternating=True, beta_regulators=True)
+                
+                elif 'CAA' in analysis_type:
+                    AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p)
+
+                
                 analysis_A = AAM._synthetic_results[AA_type][0].A
                 analysis_Z = AAM._synthetic_results[AA_type][0].Z
 
