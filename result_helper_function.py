@@ -98,7 +98,8 @@ def result_helper_function(params):
                     #print(BDM(syn_betas,analysis_betas,AA_type))
                     #print(NMI(analysis_A,syn_A.T))
 
-
+    CSV_PATH = 'results/DF_ALL_RESULTS.csv'
+    df_master = pd.read_csv('results/DF_ALL_RESULTS.csv')
     dataframe = pd.DataFrame.from_dict({
         'sigma': s,
         'sigma_std': sigma_std,
@@ -113,9 +114,5 @@ def result_helper_function(params):
         'MCC': MCCs_list,
         'BDM': BDM_list,
         'Est. sigma': sigma_est_list})
-
-    if not params[4]:
-        csv_name = 'result dataframes/' + str(s) + "_" + str(sigma_std) + "_" + str(synthetic_arch) + "_" + str(a_param) + "_" + str(b_param) + "_" + str(synthetic_arch) + ".csv"
-    else:
-        csv_name = 'result dataframes/' + 'VARYINGARCHETYPES' + str(s) + "_" + str(sigma_std) + "_" + str(synthetic_arch) + "_" + str(a_param) + "_" + str(b_param) + "_" + str(synthetic_arch) + ".csv"
-    dataframe.to_csv(csv_name, index=False) 
+    df_master = pd.concat([df_master, dataframe], axis=0, ignore_index=True)
+    df_master.to_csv(CSV_PATH, index=False)
