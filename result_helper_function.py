@@ -60,9 +60,9 @@ def result_helper_function(params):
         beta_regulators = False
         alternating = False
 
-        if alternating in analysis_type:
+        if "alternating" in analysis_type:
             alternating = True
-        if beta_regulators in analysis_type:
+        if "betareg" in analysis_type:
             beta_regulators = True
 
         for analysis_arch in analysis_archs:
