@@ -15,7 +15,8 @@ def result_helper_function(params):
     p = 6
     n_iter = 2000
     reps = 10
-    AA_types = ["CAA", "TSAA", "RBOAA", "OAA"]
+    AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_Alternating_Betareg',
+                'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_Alternating_Betareg', 'CAA_']
     #AA_types = ["RBOAA", "OAA"]
 
     s = params[0]
@@ -48,16 +49,12 @@ def result_helper_function(params):
     syn_Z = AAM._synthetic_data.Z
     syn_betas = AAM._synthetic_data.betas
 
-    for AA_type in AA_types:
-        if AA_type == "CAA":
+    for analysis_type in AA_types:
+        AA_type = analysis_type.split('_')[0]
+        if AA_type == 'CAA':
             lr = 0.1
-        elif AA_type == "TSAA":
+        else:
             lr = 0.01
-        elif AA_type == "OAA":
-            lr = 0.01
-        elif AA_type == "RBOAA":
-            lr = 0.01
-        
         for analysis_arch in analysis_archs:
             for rep in range(reps):
 
@@ -65,30 +62,30 @@ def result_helper_function(params):
                 analysis_archs_list.append(analysis_arch)
                 reps_list.append(rep)
 
-                AAM.analyse(AA_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, early_stopping=True, with_hot_start=True, p=p)
+                AAM.analyse(model_type = AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p)
                 analysis_A = AAM._synthetic_results[AA_type][0].A
                 analysis_Z = AAM._synthetic_results[AA_type][0].Z
 
-                if AA_type == "CAA":
-                    loss = AAM._synthetic_results[AA_type][0].RSS[-1]
-                    BDM_list.append("NaN")
-                    sigma_est_list.append("NaN")
-                    losses_list.append(loss)
-                    NMIs_list.append(NMI(analysis_A,syn_A))
-                    MCCs_list.append(MCC(analysis_Z,syn_Z))
+                #if AA_type == "CAA":
+                #    loss = AAM._synthetic_results[AA_type][0].RSS[-1]
+                #    BDM_list.append("NaN")
+                #    sigma_est_list.append("NaN")
+                #    losses_list.append(loss)
+                #    NMIs_list.append(NMI(analysis_A,syn_A))
+                #    MCCs_list.append(MCC(analysis_Z,syn_Z))
                 
-                else:
-                    loss = AAM._synthetic_results[AA_type][0].loss[-1]
-                    analysis_betas = AAM._synthetic_results[AA_type][0].b
-                    print(AA_type)
-                    print(analysis_betas.shape)
-                    BDM_list.append(BDM(syn_betas,analysis_betas,AA_type))
-                    sigma_est_list.append(np.mean(AAM._synthetic_results[AA_type][0].sigma))
-                    losses_list.append(loss)
-                    NMIs_list.append(NMI(analysis_A,syn_A.T))
-                    MCCs_list.append(MCC(analysis_Z,syn_Z.T))
-                    print(BDM(syn_betas,analysis_betas,AA_type))
-                    print(NMI(analysis_A,syn_A.T))
+                #else:
+                loss = AAM._synthetic_results[AA_type][0].loss[-1]
+                analysis_betas = AAM._synthetic_results[AA_type][0].b
+                #print(AA_type)
+                #print(analysis_betas.shape)
+                BDM_list.append(BDM(syn_betas,analysis_betas,AA_type))
+                sigma_est_list.append(np.mean(AAM._synthetic_results[AA_type][0].sigma))
+                losses_list.append(loss)
+                NMIs_list.append(NMI(analysis_A,syn_A.T))
+                MCCs_list.append(MCC(analysis_Z,syn_Z.T))
+                #print(BDM(syn_betas,analysis_betas,AA_type))
+                #print(NMI(analysis_A,syn_A.T))
 
 
     dataframe = pd.DataFrame.from_dict({
