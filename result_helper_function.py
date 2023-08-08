@@ -15,7 +15,7 @@ def result_helper_function(params):
     M = 21
     p = 6
     n_iter = 2000
-    reps = 1
+    reps = 10
     AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
                 'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
 
