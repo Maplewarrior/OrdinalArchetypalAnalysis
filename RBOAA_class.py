@@ -160,6 +160,7 @@ class _RBOAA:
         ########## INITIALIZATION OF OPTIMIZED VARIABLES // ALTERNATING ##########
         if alternating:
             optimizer, A_non_constraint, B_non_constraint, b_non_constraint, sigma_non_constraint, c1_non_constraint, c2 = self._compute_archetypes(X, K, p, n_iter, lr, mute, columns, early_stopping = early_stopping, backup_itterations=backup_itterations, with_OAA_initialization=with_OAA_initialization, for_hotstart_usage=True, alternating=False, hotstart_alternating=alternating, beta_regulators=beta_regulators)
+            sigma_non_constraint.requires_grad_(True)
 
 
         ########## INITIALIZATION OF OPTIMIZED VARIABLES // OAA INITALIZATION ##########
@@ -173,10 +174,12 @@ class _RBOAA:
             b_non_constraint = b_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
             c1_non_constraint = c1_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
             c2 = c2_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
-            sigma_non_constraint = sigma_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
             if for_hotstart_usage:
                 if not mute:
                     print("\nPerforming RBOAA with global sigma.")
+                sigma_non_constraint = sigma_hot.clone().detach().requires_grad_(True)
+            else:
+                sigma_non_constraint = sigma_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
             optimizer = optim.Adam([A_non_constraint, 
                                     B_non_constraint, 
                                     b_non_constraint, 
