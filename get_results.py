@@ -11,8 +11,8 @@ import multiprocessing
 def get_all_results():
 
     # define parameters
-    a_params = [1]#[0.85, 1, 2]
-    b_params = [5, 10]#[1, 5, 10]
+    a_params = [0.85, 1, 2]
+    b_params = [1, 5, 10]
     sigmas = [-3.5]#[]
     sigma_stds = [0]
 

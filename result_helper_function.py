@@ -11,15 +11,15 @@ def result_helper_function(params):
     from eval_measures import MCC
     from eval_measures import BDM
     
-    N = 500
+    N = 10000
     M = 21
     p = 6
     n_iter = 2000
     reps = 1
-    #AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
-                #'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
+    AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
+                'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
 
-    AA_types = ['RBOAA_hotstart', 'OAA_hotstart']
+    #AA_types = ['RBOAA_hotstart', 'OAA_hotstart']
 
     s = params[0]
     a_param = params[2]
