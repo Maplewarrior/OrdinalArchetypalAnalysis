@@ -31,7 +31,7 @@ def NMI(A1, A2):
 
 # Boundary Measure
 def BDM(b_true, b_est, AA_type):
-
+    
     if b_true.ndim > 1:
         N, J = b_true.shape
         if AA_type == "OAA":

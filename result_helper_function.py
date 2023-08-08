@@ -1,3 +1,4 @@
+import os
 from telnetlib import OLD_ENVIRON
 from eval_measures import calcMI
 
@@ -10,14 +11,15 @@ def result_helper_function(params):
     from eval_measures import MCC
     from eval_measures import BDM
     
-    N = 10000
+    N = 500
     M = 21
     p = 6
     n_iter = 2000
-    reps = 10
-    AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
-                'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
-    #AA_types = ["RBOAA", "OAA"]
+    reps = 1
+    #AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
+                #'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
+
+    AA_types = ['RBOAA_hotstart', 'OAA_hotstart']
 
     s = params[0]
     a_param = params[2]
@@ -41,9 +43,9 @@ def result_helper_function(params):
 
     AAM = AA()
     if b_param == "RB_false":
-        AAM.create_synthetic_data(N=N, M=M, K=synthetic_arch, p=p, sigma=s, rb=False, a_param=a_param, b_param=0,mute=True, sigma_std=sigma_std)
+        AAM.create_synthetic_data(N=N, M=M, K=synthetic_arch, p=p, sigma=s, rb=False, a_param=a_param, b_param=0,mute=True, sigma_dev=sigma_std)
     else:
-        AAM.create_synthetic_data(N=N, M=M, K=synthetic_arch, p=p, sigma=s, rb=True, a_param=a_param, b_param=b_param,mute=True, sigma_std=sigma_std)
+        AAM.create_synthetic_data(N=N, M=M, K=synthetic_arch, p=p, sigma=s, rb=True, a_param=a_param, b_param=b_param,mute=True, sigma_dev=sigma_std)
     
     syn_A = AAM._synthetic_data.A
     syn_Z = AAM._synthetic_data.Z
@@ -78,14 +80,16 @@ def result_helper_function(params):
                 analysis_Z = AAM._synthetic_results[AA_type][0].Z
 
                 if AA_type == "CAA":
-                    loss = AAM._synthetic_results[AA_type][0].RSS[-1]
+                    loss = AAM._synthetic_results[AA_type][0].loss[-1]
                     BDM_list.append("NaN")
                     sigma_est_list.append("NaN")
                     losses_list.append(loss)
-                    NMIs_list.append(NMI(analysis_A,syn_A))
-                    MCCs_list.append(MCC(analysis_Z,syn_Z))
+                    NMIs_list.append(NMI(analysis_A, syn_A))
+                    MCCs_list.append(MCC(analysis_Z, syn_Z))
                 
                 else:
+                    #import pdb
+                    #pdb.set_trace()
                     loss = AAM._synthetic_results[AA_type][0].loss[-1]
                     analysis_betas = AAM._synthetic_results[AA_type][0].b
                     #print(AA_type)
@@ -93,13 +97,14 @@ def result_helper_function(params):
                     BDM_list.append(BDM(syn_betas,analysis_betas,AA_type))
                     sigma_est_list.append(np.mean(AAM._synthetic_results[AA_type][0].sigma))
                     losses_list.append(loss)
-                    NMIs_list.append(NMI(analysis_A,syn_A.T))
-                    MCCs_list.append(MCC(analysis_Z,syn_Z.T))
+                    NMIs_list.append(NMI(analysis_A, syn_A))
+                    MCCs_list.append(MCC(analysis_Z, syn_Z))
                     #print(BDM(syn_betas,analysis_betas,AA_type))
                     #print(NMI(analysis_A,syn_A.T))
 
+    
     CSV_PATH = 'results/DF_ALL_RESULTS.csv'
-    df_master = pd.read_csv('results/DF_ALL_RESULTS.csv')
+    
     dataframe = pd.DataFrame.from_dict({
         'sigma': s,
         'sigma_std': sigma_std,
@@ -114,5 +119,9 @@ def result_helper_function(params):
         'MCC': MCCs_list,
         'BDM': BDM_list,
         'Est. sigma': sigma_est_list})
+    if not os.path.exists(CSV_PATH):
+        df_master = pd.DataFrame(columns = list(dataframe.columns))
+        df_master.to_csv(CSV_PATH, index=False)
+    df_master = pd.read_csv(CSV_PATH)
     df_master = pd.concat([df_master, dataframe], axis=0, ignore_index=True)
     df_master.to_csv(CSV_PATH, index=False)
