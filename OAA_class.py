@@ -8,7 +8,6 @@ from timeit import default_timer as timer
 from AA_result_class import _OAA_result
 from loading_bar_class import _loading_bar
 from CAA_class import _CAA
-from copy import deepcopy
 
 
 
@@ -89,7 +88,7 @@ class _OAA:
     ########## HELPER FUNCTION // SIGMA ##########
     def _apply_constraints_sigma(self,sigma,sigma_cap):
         if sigma_cap:
-            return self.softplus(sigma.clamp(min=-6.9))
+            return self.softplus(sigma.clamp(min=-9.21, max=-9.21))
         return self.softplus(sigma)
 
     ########## HELPER FUNCTION // ALPHA ##########
@@ -171,7 +170,22 @@ class _OAA:
         if alternating:
             if not mute:
                 print("\nPerforming alternating analysis with sigma cap.")
-            optimizer, A_non_constraint, B_non_constraint, sigma_non_constraint, b_non_constraint, c1_non_constraint, c2 = self._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data=with_synthetic_data, early_stopping=early_stopping, for_hotstart_usage=True, sigma_cap=True, beta_regulators=beta_regulators, alternating=False, backup_itterations=backup_itterations)
+            optimizer, A_non_constraint, B_non_constraint, sigma_non_constraint, b_non_constraint, c1_non_constraint, c2 = self._compute_archetypes(X, 
+                                                                                                                                                    K, 
+                                                                                                                                                    p, 
+                                                                                                                                                    n_iter=n_iter, 
+                                                                                                                                                    lr=lr, 
+                                                                                                                                                    mute=mute, 
+                                                                                                                                                    columns=columns, 
+                                                                                                                                                    with_CAA_initialization=with_CAA_initialization,
+                                                                                                                                                    with_synthetic_data=with_synthetic_data, 
+                                                                                                                                                    early_stopping=early_stopping, 
+                                                                                                                                                    for_hotstart_usage=True, 
+                                                                                                                                                    sigma_cap=True, 
+                                                                                                                                                    beta_regulators=beta_regulators, 
+                                                                                                                                                    alternating=False, 
+                                                                                                                                                    backup_itterations=backup_itterations)
+            sigma_non_constraint.requires_grad_(True)
             
 
         ########## NON ALTERNATING ##########
@@ -185,7 +199,10 @@ class _OAA:
                 A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
                 B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
             b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
-            sigma_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
+            if sigma_cap:
+                sigma_non_constraint = torch.tensor(-9.21, requires_grad=False)
+            else:
+                sigma_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
             c1_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
             c2 = torch.autograd.Variable(torch.rand(1), requires_grad=True)
             optimizer = optim.Adam([A_non_constraint, 
