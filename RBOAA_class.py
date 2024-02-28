@@ -226,7 +226,6 @@ class _RBOAA:
             L.backward()
             optimizer.step()
 
-
             ########## CHECKS ##########
             if i % 25 == 0:
                 ########## ITTERATION BACKUP ##########
