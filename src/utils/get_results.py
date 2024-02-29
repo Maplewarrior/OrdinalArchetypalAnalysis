@@ -1,5 +1,5 @@
 import pdb
-from result_helper_function import result_helper_function
+from src.utils.result_helper_function import result_helper_function
 import multiprocessing
 
 """ Define parameters:

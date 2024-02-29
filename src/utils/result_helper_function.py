@@ -1,15 +1,12 @@
 import os
 from telnetlib import OLD_ENVIRON
-from eval_measures import calcMI
-
+from src.utils.eval_measures import calcMI
 
 def result_helper_function(params):
     from AAM import AA
     import numpy as np
     import pandas as pd
-    from eval_measures import NMI
-    from eval_measures import MCC
-    from eval_measures import BDM
+    from src.utils.eval_measures import NMI, MCC, BDM
     
     N = 10000
     M = 21

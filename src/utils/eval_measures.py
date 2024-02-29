@@ -19,8 +19,6 @@ def calcMI(A1, A2):
     MI = sum(PXY[ind]*np.log(PXY[ind]/PXPY[ind]))
     return MI
 
-
-
 # Normalized mutual information function
 def NMI(A1, A2):
     #krav at værdierne i række summer til 1 ???

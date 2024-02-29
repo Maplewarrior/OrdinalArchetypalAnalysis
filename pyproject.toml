@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "AA_Module"
+version = "0.0.1"
+authors = [
+  { name="Michael Harborg", email="s204138@dtu.dk" },
+  { name="Oliver Elmgreen", email="s204070@dtu.dk"},
+  { name="Andreas Bigom", email="s200925@dtu.dk"}
+]
+description = "A python package for performing Ordinal Archetypal Analysis."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Maplewarrior/AAM-Module-V3"
+Issues = "https://github.com/Maplewarrior/AAM-Module-V3/issues"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.ruff]
+line-length = 120

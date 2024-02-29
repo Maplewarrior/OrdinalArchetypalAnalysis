@@ -1,15 +1,14 @@
 ########## IMPORTS ##########
 from turtle import back
-from CAA_class import _CAA
-from OAA_class import _OAA
-from RBOAA_class import _RBOAA
-from TSAA_class import _TSAA
-from synthetic_data_class import _synthetic_data
+from src.methods.CAA_class import _CAA
+from src.methods.OAA_class import _OAA
+from src.methods.RBOAA_class import _RBOAA
+# from TSAA_class import _TSAA
+from src.utils.synthetic_data_class import _synthetic_data
 import pandas as pd
 import numpy as np
 import pickle
 from os import path
-
 
 ########## ARCHETYPAL ANALYSIS MODULE CLASS ##########
 class AA:
@@ -19,7 +18,7 @@ class AA:
         self._CAA = _CAA()
         self._OAA = _OAA()
         self._RBOAA = _RBOAA()
-        self._TSAA = _TSAA()
+        # self._TSAA = _TSAA()
         self._results = {"CAA": [], "OAA": [], "RBOAA": [], "TSAA": []}
         self._synthetic_results = {"CAA": [], "OAA": [], "RBOAA": [], "TSAA": []}
         self._has_data = False
@@ -31,7 +30,7 @@ class AA:
         self.ranked_archetype_dataframe = pd.DataFrame()
 
 
-    def load_data(self, X: np.ndarray, columns: list()):
+    def load_data(self, X: np.ndarray, columns: list):
         self.columns = columns
         self.X = X
         self.N, self.M = X.shape
@@ -45,7 +44,7 @@ class AA:
             print(f"\nThe data was loaded successfully!\n")
 
 
-    def load_csv(self, filename: str, columns: list(), rows: int = None, mute: bool = False):
+    def load_csv(self, filename: str, columns: list, rows: int = None, mute: bool = False):
         self.columns, self.M, self.N, self.X = self._clean_data(filename, columns, rows)
         self._has_data = True
         if not mute:
@@ -76,7 +75,7 @@ class AA:
         return column_names, M, N, X
     
 
-    def create_synthetic_data(self, N: int = 1000, M: int = 10, K: int = 3, p: int = 6, sigma: float = -20.0, rb: bool = False, b_param: float = 100, a_param: float = 1, sigma_dev: float = 0, mute = False):
+    def create_synthetic_data(self, N: int = 1000, M: int = 10, K: int = 3, p: int = 6, sigma: float = -20.0, rb: bool = False, b_param: float = 100, a_param: float = 1, sigma_dev: float = 0, mute: bool = False):
         if N < 2:
             print("The value of N can't be less than 2. The value specified was {0}".format(N))
         elif M < 2:
@@ -144,12 +143,12 @@ class AA:
             save_figure: bool = False,
             filename: str = "figure",
             result_number: int = 0, 
-            attributes: list() = [1,2], 
+            attributes: list = [1,2], 
             archetype_number: int = 1, 
             types: dict = {"type 1": [1],"type 2": [2]},
             weighted: str = "equal_norm",
-            subject_indexes: list() = [1],
-            attribute_indexes: list() = [],
+            subject_indexes: list = [1],
+            attribute_indexes: list = [],
             with_synthetic_data: bool = False):
         
         if not model_type in ["CAA", "OAA", "RBOAA", "TSAA"]:

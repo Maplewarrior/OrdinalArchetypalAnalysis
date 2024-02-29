@@ -1,6 +1,6 @@
 ########## IMPORT ##########
 from matplotlib.pyplot import plot
-from plots_class import _plots
+from src.utils.plots_class import _plots
 import pickle
 
 

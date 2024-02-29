@@ -5,11 +5,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from timeit import default_timer as timer
-from AA_result_class import _OAA_result
-from loading_bar_class import _loading_bar
-from OAA_class import _OAA
+from src.utils.AA_result_class import _OAA_result
+from src.misc.loading_bar_class import _loading_bar
+from src.methods.OAA_class import _OAA
 
-
+import pdb
 
 ########## ORDINAL ARCHETYPAL ANALYSIS CLASS ##########
 class _RBOAA:
@@ -76,18 +76,22 @@ class _RBOAA:
         return m(A)
 
     ########## HELPER FUNCTION // BETAS ##########
-    def _apply_constraints_beta(self,b,c1_non_constraint,c2,beta_regulators): 
+    def _apply_constraints_beta(self,b, c1_non_constraint,c2, beta_regulators): 
         betas = torch.empty((self.N,self.p+1))
+        
         if beta_regulators:
-            betas[:, 1:self.p+1] = torch.nn.functional.softplus(c1_non_constraint) * torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1) + c2
+            # betas[:, 1:self.p+1] = torch.nn.functional.softplus(c1_non_constraint) * torch.cumsum(torch.nn.functional.softmax(b.clone(), dim=1), dim=1) + c2
+            betas = torch.nn.functional.softplus(c1_non_constraint) * torch.cumsum(torch.nn.functional.softmax(b.clone(), dim=1), dim=1) + c2
             return betas
         else:
-            betas[:,0] = 0
-            betas[:, 1:self.p+1] = torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1)
+            # betas[:,0] = 0
+            # betas[:, 1:self.p+1] = torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1)[:, 1:self.p+1]
+            betas[:,0] = -torch.inf
+            betas = torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1)
             return betas
 
     ########## HELPER FUNCTION // SIGMA ##########
-    def _apply_constraints_sigma(self,sigma,global_sigma):
+    def _apply_constraints_sigma(self, sigma, global_sigma):
         m = nn.Softplus()
         if global_sigma:
             return m(torch.mean(sigma).repeat(self.N,1))
@@ -169,7 +173,7 @@ class _RBOAA:
             if not mute:
                 print("\nPerforming OAA for initialization of RBOAA.")
             OAA = _OAA()
-            _, A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, with_CAA_initialization=with_OAA_initialization, early_stopping = early_stopping, backup_itterations=backup_itterations, for_hotstart_usage=True,alternating=hotstart_alternating,beta_regulators=beta_regulators)
+            _, A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, with_CAA_initialization=False, early_stopping = early_stopping, backup_itterations=backup_itterations, for_hotstart_usage=True,alternating=hotstart_alternating,beta_regulators=beta_regulators)
             A_non_constraint = A_hot.clone().detach().requires_grad_(True)
             B_non_constraint = B_hot.clone().detach().requires_grad_(True)
             b_non_constraint = b_hot.clone().detach().repeat(self.N,1).requires_grad_(True)

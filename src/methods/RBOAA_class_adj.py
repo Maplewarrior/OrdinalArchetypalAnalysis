@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from timeit import default_timer as timer
-from AA_result_class import _OAA_result
-from loading_bar_class import _loading_bar
-from OAA_class_adj import _OAA
+from src.utils.AA_result_class import _OAA_result
+from src.misc.loading_bar_class import _loading_bar
+from src.methods.OAA_class_adj import _OAA
 
 
 
@@ -108,7 +108,6 @@ class _RBOAA:
         self.p = p
         self.loss = []
         start = timer()
-        
 
         if with_OAA_initialization:
             # if not mute:
@@ -156,7 +155,6 @@ class _RBOAA:
             self.loss.append(L.detach().numpy())
             L.backward()
             optimizer.step()
-
 
             ########## EARLY STOPPING ##########
             if i % 25 == 0 and early_stopping:

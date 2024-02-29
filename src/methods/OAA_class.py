@@ -5,11 +5,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from timeit import default_timer as timer
-from AA_result_class import _OAA_result
-from loading_bar_class import _loading_bar
-from CAA_class import _CAA
-
-
+from src.utils.AA_result_class import _OAA_result
+from src.misc.loading_bar_class import _loading_bar
+from src.methods.CAA_class import _CAA
 
 ########## ORDINAL ARCHETYPAL ANALYSIS CLASS ##########
 class _OAA:
@@ -80,16 +78,18 @@ class _OAA:
         return self.softmax_dim1(A)
 
     ########## HELPER FUNCTION // BETAS ##########
-    def _apply_constraints_beta(self,b,c1_non_constraint,c2,beta_regulators): 
+    def _apply_constraints_beta(self,b,c1_non_constraint,c2,beta_regulators):
+        # import pdb
+        # pdb.set_trace()
         if beta_regulators:
-            return self.softplus(c1_non_constraint) * torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)] + c2
+            return self.softplus(c1_non_constraint) * torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)-1] + c2
         else:
-            return torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)]
+            return torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)-1]
 
     ########## HELPER FUNCTION // SIGMA ##########
     def _apply_constraints_sigma(self,sigma,sigma_cap):
         if sigma_cap:
-            return self.softplus(sigma.clamp(min=-9.21, max=-9.21))
+            return self.softplus(sigma.clamp(min=-3, max=10)) # softplus(-9.21) = 0.00010002903
         return self.softplus(sigma)
 
     ########## HELPER FUNCTION // ALPHA ##########
@@ -159,16 +159,15 @@ class _OAA:
         beta_regulators = False,
         alternating = False):
 
-
         ########## INITIALIZATION OF GENERAL VARIABLES ##########
         self.N, self.M = len(X.T), len(X.T[0,:])
         Xt = torch.tensor(X.T, dtype = torch.long)
         self.loss = []
 
-
         ########## INITIALIZATION OF OPTIMIZED VARIABLES ##########
         ########## ALTERNATING ##########
         if alternating:
+            ### Note: Alternating refers to doing an analysis with sigma being capped
             if not mute:
                 print("\nPerforming alternating analysis with sigma cap.")
             optimizer, A_non_constraint, B_non_constraint, sigma_non_constraint, b_non_constraint, c1_non_constraint, c2 = self._compute_archetypes(X, 
@@ -199,7 +198,8 @@ class _OAA:
             else:
                 A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
                 B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
-            b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
+            # b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
+            b_non_constraint = torch.autograd.Variable(torch.rand(p+1), requires_grad=True) # MHA update
             if sigma_cap:
                 sigma_non_constraint = torch.tensor(-9.21, requires_grad=False)
             else:
@@ -218,7 +218,6 @@ class _OAA:
         if not mute:
             loading_bar = _loading_bar(n_iter, "Ordinal Archetypal Analysis")
         start = timer()
-
         
         ########## ANALYSIS ##########
         for i in range(n_iter):
@@ -229,7 +228,6 @@ class _OAA:
             self.loss.append(L.detach().numpy())
             L.backward()
             optimizer.step()
-
 
             ########## CHECKS ##########
             if i % 25 == 0:
@@ -250,11 +248,15 @@ class _OAA:
         if not for_hotstart_usage:
             ########## GET INSTANCE OF RESULT ##########
             result = self.get_backup()
-            if not mute:
+
+            if result is None: ## this happens iff loss is nan
+                print("nan loss in OAA!")
+                return
+
+            if not mute:                
                 result._print()
             return result
         
-
         ########## RETURN MATRICIES IF HOTSTART USAGE ##########
         else:
             return optimizer, A_non_constraint, B_non_constraint, sigma_non_constraint, b_non_constraint, c1_non_constraint, c2

@@ -1,7 +1,7 @@
-from RBOAA_class_old import _RBOAA
-from OAA_class_old import _OAA
-from AAM import AA as AA_class
-from eval_measures import NMI, MCC
+from src.methods.RBOAA_class_old import _RBOAA
+from src.methods.OAA_class_old import _OAA
+from src.AAM import AA as AA_class
+from src.utils.eval_measures import NMI, MCC
 import numpy as np
 
 N, M = 5000, 10
@@ -16,8 +16,6 @@ n_iter = 10000
 lr = 0.01
 mute = True
 early_stopping = True
-
-
 
 results = {"regular":[],"alternating":[],"beta":[],"backup":[],"all":[]}
 

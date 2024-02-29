@@ -5,10 +5,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from timeit import default_timer as timer
-from AA_result_class import _OAA_result
-from loading_bar_class import _loading_bar
-from CAA_class import _CAA
-
+from src.utils.AA_result_class import _OAA_result
+from src.misc.loading_bar_class import _loading_bar
+from src.methods.CAA_class import _CAA
 
 
 ########## ORDINAL ARCHETYPAL ANALYSIS CLASS ##########

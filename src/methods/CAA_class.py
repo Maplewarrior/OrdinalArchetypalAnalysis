@@ -5,8 +5,8 @@ import torch.optim as optim
 from timeit import default_timer as timer
 import numpy as np
 
-from loading_bar_class import _loading_bar
-from AA_result_class import _CAA_result
+from src.misc.loading_bar_class import _loading_bar
+from src.utils.AA_result_class import _CAA_result
 
 
 ########## CONVENTIONAL ARCHETYPAL ANALYSIS CLASS ##########
@@ -42,7 +42,6 @@ class _CAA:
         B = torch.autograd.Variable(torch.rand(N, K), requires_grad=True)
         optimizer = optim.Adam([A, B], amsgrad = True, lr = lr)
         
-
         ########## ANALYSIS ##########
         for i in range(n_iter):
             if not mute:

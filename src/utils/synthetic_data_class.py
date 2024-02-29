@@ -60,9 +60,7 @@ class _synthetic_data:
     def get_Z(self, N, M, K, p, rb, b_param):
         # Ensure reproducibility
         np.random.seed(42)
-        
-        
-        
+
         # Check to ensure that there are no NaN's
         if b_param < 0.01:
             b_param = 0.01
@@ -76,10 +74,8 @@ class _synthetic_data:
         for i in range(len(betas)-1):
             alphas[i+1] = (betas[i] + betas[i+1]) / 2
         
-        
         Z_ordinal = np.ceil(np.random.uniform(0, 1, size = (M,K))*p).astype(int)
         Z_alpha = alphas[Z_ordinal-1]
-        
         
         if rb == True:
             betas = self.biasedBetas(N=N, p=p, b_param=b_param)
@@ -184,7 +180,6 @@ class _synthetic_data:
         probs = self.Probs(D)
         
         X_final = self.toCategorical(probs)
-        
         
         return X_final, Z_ordinal, Z_alpha, A, betas
 
