@@ -11,10 +11,10 @@ import multiprocessing
 def get_all_results():
 
     # define parameters
-    a_params = [0.85, 1, 2]
-    b_params = [1, 5, 10]
-    sigmas = [-3.5]#[]
-    sigma_stds = [0]
+    a_params = [1]#[0.85, 1, 2]
+    b_params = [1]#[1, 5, 10]
+    sigmas = [-2.2522] #, -1.5078, -1.0502]
+    sigma_stds = [1]
 
     n_synthetic_archetypes = 5
     varying_analysis_archetypes = False
@@ -27,10 +27,12 @@ def get_all_results():
                 for b_param in b_params:
                     # set parameters to pass to results_helper_function
                     all_parameters.append([sigma, n_synthetic_archetypes, a_param, b_param, varying_analysis_archetypes, sigma_std])
-                    params = [sigma, n_synthetic_archetypes, a_param, b_param, varying_analysis_archetypes, sigma_std]
-                    result_helper_function(params)
-    #with multiprocessing.Pool(multiprocessing.cpu_count()-1) as p:
-#        p.map(result_helper_function, all_parameters)
+                    #params = [sigma, n_synthetic_archetypes, a_param, b_param, varying_analysis_archetypes, sigma_std]
+                    #result_helper_function(params)
+                    
+    with multiprocessing.Pool(multiprocessing.cpu_count()-1) as p:
+        p.map(result_helper_function, all_parameters)
+                    
 
 if __name__ == '__main__':
     get_all_results()

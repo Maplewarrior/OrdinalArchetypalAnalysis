@@ -8,16 +8,16 @@ def result_helper_function(params):
     import pandas as pd
     from src.utils.eval_measures import NMI, MCC, BDM
     
-    N = 10000
+    N = 1000 #10000
     M = 21
     p = 6
-    n_iter = 2000
-    reps = 10
-    AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
-                'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
+    n_iter = 2000 #2000
+    reps = 1 #10
+    #AA_types = ['RBOAA_hotstart', 'RBOAA_alternating', 'RBOAA_betareg', 'RBOAA_alternating_betareg',
+    #            'OAA_hotstart', 'OAA_alternating', 'OAA_betareg', 'OAA_alternating_betareg', 'CAA_']
 
     #AA_types = ['RBOAA_hotstart', 'OAA_hotstart']
-
+    AA_types = ['RBOAA_alternating']
     s = params[0]
     a_param = params[2]
     b_param = params[3]
@@ -72,7 +72,10 @@ def result_helper_function(params):
                 reps_list.append(rep)
 
                 AAM.analyse(model_type=AA_type, lr=lr, with_synthetic_data = True, mute=True, K=analysis_arch, n_iter = n_iter, with_hot_start=True, p=p, beta_regulators=beta_regulators, alternating=alternating)
-
+                
+                print(AA_type, "Rep:", rep)
+                #print(AAM._synthetic_results[AA_type][0])
+                print(AAM._synthetic_results)
                 analysis_A = AAM._synthetic_results[AA_type][0].A
                 analysis_Z = AAM._synthetic_results[AA_type][0].Z
 
