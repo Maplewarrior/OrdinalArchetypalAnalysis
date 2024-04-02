@@ -248,6 +248,8 @@ class _RBOAA:
         if not for_hotstart_usage:
             ########## GET INSTANCE OF RESULT ##########
             result = self.get_backup()
+            if result is None:
+                print("NaN loss in RBOAA!")
             if not mute:
                 result._print()
             return result
