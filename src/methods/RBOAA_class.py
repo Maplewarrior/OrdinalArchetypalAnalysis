@@ -81,13 +81,12 @@ class _RBOAA:
         
         if beta_regulators:
             # betas[:, 1:self.p+1] = torch.nn.functional.softplus(c1_non_constraint) * torch.cumsum(torch.nn.functional.softmax(b.clone(), dim=1), dim=1) + c2
+            b = torch.cat([torch.ones((b.size(0), 1))*(-torch.inf), b], dim=1)
             betas = torch.nn.functional.softplus(c1_non_constraint) * torch.cumsum(torch.nn.functional.softmax(b.clone(), dim=1), dim=1) + c2
             return betas
         else:
-            # betas[:,0] = 0
-            # betas[:, 1:self.p+1] = torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1)[:, 1:self.p+1]
-            betas[:,0] = -torch.inf
-            betas = torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1)
+            betas[:,0] = 0
+            betas[:, 1:self.p+1] = torch.cumsum(torch.nn.functional.softmax(b.clone(),dim=1),dim=1)
             return betas
 
     ########## HELPER FUNCTION // SIGMA ##########
@@ -152,7 +151,6 @@ class _RBOAA:
         alternating = False,
         beta_regulators = False):
 
-
         ########## INITIALIZATION ##########
         self.N, self.M = len(X.T), len(X.T[0,:])
         Xt = torch.tensor(X.T, dtype = torch.long)
@@ -197,9 +195,9 @@ class _RBOAA:
         else:
             A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
             B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
-            b_non_constraint = torch.autograd.Variable(torch.rand(self.N,p+1), requires_grad=True)
-            c1_non_constraint = torch.autograd.Variable(torch.rand(1).repeat(self.N,1), requires_grad=True)
-            c2 = torch.autograd.Variable(torch.rand(1).repeat(self.N,1), requires_grad=True)
+            b_non_constraint = torch.autograd.Variable(torch.rand(self.N, p), requires_grad=True)
+            c1_non_constraint = torch.autograd.Variable(torch.tensor([0.5414]).repeat(self.N,1), requires_grad=True)
+            c2 = torch.autograd.Variable(torch.tensor([0.0]).repeat(self.N,1), requires_grad=True)
             if for_hotstart_usage:
                 if not mute:
                     print("\nPerforming RBOAA with global sigma.")

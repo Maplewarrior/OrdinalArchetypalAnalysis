@@ -8,6 +8,8 @@ from timeit import default_timer as timer
 from src.utils.AA_result_class import _OAA_result
 from src.misc.loading_bar_class import _loading_bar
 from src.methods.CAA_class import _CAA
+import pdb
+
 
 ########## ORDINAL ARCHETYPAL ANALYSIS CLASS ##########
 class _OAA:
@@ -38,7 +40,7 @@ class _OAA:
         B_f = self._apply_constraints_AB(B_non_constraint).detach().numpy()
         b_f = self._apply_constraints_beta(b_non_constraint,c1_non_constraint,c2,beta_regulators)
         alphas_f = self._calculate_alpha(b_f,beta_regulators)
-        b_f = b_f[:-1]
+        b_f = b_f[:-1] if not beta_regulators else b_f[1:]
         X_tilde_f = self._calculate_X_tilde(Xt,alphas_f).detach().numpy()
         Z_tilde_f = (self._apply_constraints_AB(B_non_constraint).detach().numpy() @ X_tilde_f)
         sigma_f = self._apply_constraints_sigma(sigma_non_constraint, sigma_cap).detach().numpy()
@@ -78,32 +80,41 @@ class _OAA:
         return self.softmax_dim1(A)
 
     ########## HELPER FUNCTION // BETAS ##########
-    def _apply_constraints_beta(self,b,c1_non_constraint,c2,beta_regulators):
-        # import pdb
-        # pdb.set_trace()
+    def _apply_constraints_beta(self, b, c1_non_constraint,c2, beta_regulators):
         if beta_regulators:
-            return self.softplus(c1_non_constraint) * torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)-1] + c2
+            # return self.softplus(c1_non_constraint) * torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)-1] + c2
+            b = torch.cat([torch.tensor([-torch.inf]), b], dim=0) # zero pad
+            return self.softplus(c1_non_constraint) * torch.cumsum(self.softmax_dim0(b), dim=0) + c2 # [p+1 x 1]
         else:
-            return torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)-1]
+            return torch.cumsum(self.softmax_dim0(b), dim=0)[:len(b)-1] #[p-1 x 1]
 
     ########## HELPER FUNCTION // SIGMA ##########
     def _apply_constraints_sigma(self,sigma,sigma_cap):
         if sigma_cap:
-            return self.softplus(sigma.clamp(min=-3, max=10)) # softplus(-9.21) = 0.00010002903
+            # return self.softplus(sigma.clamp(min=-10., max=100)) # softplus(-9.21) = 0.00010002903
+            return self.softplus(sigma.clamp(min=-9.21, max=100000)) # softplus(-9.21) = 0.00010002903
         return self.softplus(sigma)
 
     ########## HELPER FUNCTION // ALPHA ##########
-    def _calculate_alpha(self,b,beta_regulators):
-        b_j = torch.cat((torch.tensor([0.0]),b),0)
-        b_j_plus1 = torch.cat((b,torch.tensor([1.0])),0)
-        alphas = (b_j_plus1+b_j)/2
-        if beta_regulators:
+    def _calculate_alpha(self,b, beta_regulators):
+
+        if beta_regulators: # betas are [p+1 x 1]
+            alphas = (b[1:] + b[:-1]) / 2
             alphas[torch.gt(alphas, 1)] = 1.0
             alphas[torch.lt(alphas, 0)] = 0.0
+            assert len(alphas) == len(b) - 1, 'The lenght of the alpha values does not match the length of the likert scale'
+        
+        else: # betas are [p-1 x 1]
+            b_j = torch.cat((torch.tensor([0.0]),b),0)
+            b_j_plus1 = torch.cat((b,torch.tensor([1.0])),0)
+            alphas = (b_j_plus1 + b_j)/2
+            assert len(alphas) == len(b) + 1, 'The lenght of the alpha values does not match the length of the likert scale'
+        
+        assert all(alphas <= 1), 'Some alpha values are greater than 1.'
         return alphas
 
     ########## HELPER FUNCTION // X_tilde ##########
-    def _calculate_X_tilde(self,X,alphas):
+    def _calculate_X_tilde(self, X ,alphas):
         X_tilde = alphas[X.long()-1]
         return X_tilde
 
@@ -114,21 +125,23 @@ class _OAA:
         return X_hat
     
     ########## HELPER FUNCTION // LOSS ##########
-    def _calculate_loss(self,Xt, X_hat, b, sigma):
-        b = self.constantPad(b)
-        b[-1] = 1.0
+    def _calculate_loss(self, Xt, X_hat, b, sigma, beta_regulators):
+        if not beta_regulators: # b: [p-1 x 1]
+            b = self.constantPad(b)
+            b[-1] = 1.0
+        assert b.size(0) == len(Xt.unique()) + 1, f'Expected dimensions of betas to be len(likert_scale) + 1 but got {b.shape}'
         z_next = (b[Xt] - X_hat)/sigma
         z_prev = (b[Xt-1] - X_hat)/sigma
         z_next[Xt == len(b)+1] = np.inf
         z_prev[Xt == 1] = -np.inf
         P_next = torch.distributions.normal.Normal(0, 1).cdf(z_next)
         P_prev = torch.distributions.normal.Normal(0, 1).cdf(z_prev)
-        neg_logP = -torch.log(( P_next - P_prev ) +1e-10)
+        neg_logP = -torch.log(( P_next - P_prev ) + 1e-10) # +1e-10 for numeric stability?
         loss = torch.sum(neg_logP)
         return loss
 
     ########## HELPER FUNCTION // ERROR ##########
-    def _error(self,Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint,c1_non_constraint,c2,sigma_cap,beta_regulators):
+    def _error(self,Xt, A_non_constraint, B_non_constraint, b_non_constraint, sigma_non_constraint, c1_non_constraint, c2, sigma_cap, beta_regulators):
         A = self._apply_constraints_AB(A_non_constraint)
         B = self._apply_constraints_AB(B_non_constraint)
         b = self._apply_constraints_beta(b_non_constraint,c1_non_constraint,c2,beta_regulators)
@@ -136,9 +149,9 @@ class _OAA:
         alphas = self._calculate_alpha(b,beta_regulators)
         X_tilde = self._calculate_X_tilde(Xt,alphas)
         X_hat = self._calculate_X_hat(X_tilde,A,B)
-        loss = self._calculate_loss(Xt, X_hat, b, sigma)
+        # print(f'Sigma: {sigma}')
+        loss = self._calculate_loss(Xt, X_hat, b, sigma, beta_regulators)
         return loss
-        
 
     ########## COMPUTE ARCHETYPES FUNCTION OF OAA ##########
     def _compute_archetypes(
@@ -158,7 +171,7 @@ class _OAA:
         sigma_cap = False,
         beta_regulators = False,
         alternating = False):
-
+        
         ########## INITIALIZATION OF GENERAL VARIABLES ##########
         self.N, self.M = len(X.T), len(X.T[0,:])
         Xt = torch.tensor(X.T, dtype = torch.long)
@@ -198,21 +211,23 @@ class _OAA:
             else:
                 A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
                 B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
-            # b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
-            b_non_constraint = torch.autograd.Variable(torch.rand(p+1), requires_grad=True) # MHA update
+            b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
             if sigma_cap:
-                sigma_non_constraint = torch.tensor(-9.21, requires_grad=False)
+                sigma_non_constraint = torch.tensor(1e-3, requires_grad=False)
+                # sigma_non_constraint = torch.tensor(-1., requires_grad=False) # MHA sanity check
+                # sigma_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True) # MHA sanity check 2
             else:
                 sigma_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
-            c1_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
-            c2 = torch.autograd.Variable(torch.rand(1), requires_grad=True)
+            # c1_non_constraint = torch.autograd.Variable(torch.rand(1), requires_grad=True)
+            # c2 = torch.autograd.Variable(torch.rand(1), requires_grad=True)
+            c1_non_constraint = torch.autograd.Variable(torch.tensor([0.5414]), requires_grad=True) # softplus(0.5414) = 1
+            c2 = torch.autograd.Variable(torch.tensor([0.0]), requires_grad=True)
             optimizer = optim.Adam([A_non_constraint, 
                                     B_non_constraint, 
                                     b_non_constraint, 
                                     sigma_non_constraint,
                                     c1_non_constraint,
                                     c2], amsgrad = True, lr = lr)
-        
         
         ########## TIMER AND PRINT INITIALIZATION ##########
         if not mute:

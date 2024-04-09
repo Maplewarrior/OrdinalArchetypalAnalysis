@@ -11,7 +11,6 @@ from src.utils.AA_result_class import _CAA_result
 
 ########## CONVENTIONAL ARCHETYPAL ANALYSIS CLASS ##########
 class _CAA:
-
     ########## HELPER FUNCTION // EARLY STOPPING ##########
     def _early_stopping(self,i):
         last_avg = np.mean(self.RSS[-200:-100])
