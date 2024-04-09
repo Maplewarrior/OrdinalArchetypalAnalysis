@@ -8,7 +8,7 @@ class synthetic_data_naive():
         self.M = M # Number of features
         self.K = K # Number of archetypes
         self.p = p
-        self.alpha = 0.5
+        self.alpha = 1
         self.eta = self.generate_probArc(self.alpha)
         self.columns = ["SQ"+str(i) for i in range(1, M+1)]
 
@@ -36,8 +36,8 @@ class synthetic_data_naive():
         return x
 
 
-X = synthetic_data_naive(100,50,3,5).generate_data()
+X = synthetic_data_naive(1000,15,3,5).generate_data()
 
-with open('Data/synthetic_data_naive.pkl', 'wb') as f:
+with open('SyntheticData/synthetic_data_naive.pkl', 'wb') as f:
     pickle.dump(X, f)
 
