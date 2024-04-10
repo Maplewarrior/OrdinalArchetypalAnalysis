@@ -72,20 +72,15 @@ class _OAA:
 
     ########## HELPER FUNCTION // ERROR ##########
     def _error(self,Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint):
-
         A = self._apply_constraints_AB(A_non_constraint)
         B = self._apply_constraints_AB(B_non_constraint)
-        b = self._apply_constraints_beta(b_non_constraint)
+        b = self._apply_constraints_beta(b_non_constraint) # [p-1 x 1]
         sigma = self._apply_constraints_sigma(sigma_non_constraint)
-        alphas = self._calculate_alpha(b)
-        
+        alphas = self._calculate_alpha(b) # [p x 1]
         X_tilde = self._calculate_X_tilde(Xt,alphas)
         X_hat = self._calculate_X_hat(X_tilde,A,B)
-
         loss = self._calculate_loss(Xt, X_hat, b, sigma)
-        
         return loss
-        
 
     ########## COMPUTE ARCHETYPES FUNCTION OF OAA ##########
     def _compute_archetypes(

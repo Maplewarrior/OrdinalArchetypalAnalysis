@@ -75,7 +75,7 @@ class AA:
         return column_names, M, N, X
     
 
-    def create_synthetic_data(self, N: int = 1000, M: int = 10, K: int = 3, p: int = 6, sigma: float = -20.0, rb: bool = False, b_param: float = 100, a_param: float = 1, sigma_dev: float = 0, mute: bool = False):
+    def create_synthetic_data(self, N: int = 1000, M: int = 10, K: int = 3, p: int = 6, sigma: float = -3.0, rb: bool = False, b_param: float = 10, a_param: float = 1, sigma_dev: float = 0, mute: bool = False):
         if N < 2:
             print("The value of N can't be less than 2. The value specified was {0}".format(N))
         elif M < 2:
