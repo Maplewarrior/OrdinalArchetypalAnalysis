@@ -36,8 +36,8 @@ class synthetic_data_naive():
         return x
 
 
-X = synthetic_data_naive(50,20,3,5).generate_data()
+X = synthetic_data_naive(1000,20,3,5).generate_data()
 
-with open('SyntheticData/synthetic_data_naive_small.pkl', 'wb') as f:
+with open('SyntheticData/synthetic_data_naive_large.pkl', 'wb') as f:
     pickle.dump(X, f)
 
