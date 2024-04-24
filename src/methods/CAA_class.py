@@ -22,23 +22,32 @@ class _CAA:
     def _error(self, X,B,A):
         return torch.norm(X - X@B@A, p='fro')**2
     
+    ########## HELPER FUNCTION // INITIALIZE A AND B MATRICES ##########
+    def _init_AB(self, seed: int, K: int):
+        if seed is not None:
+            torch.manual_seed(seed)
+        
+        A = torch.log(torch.rand((K, self.N)))
+        A /= A.sum(dim=1)[:, None]
+        B = torch.log(torch.rand((self.N, K)))
+        B /=  B.sum(dim=1)[:, None]
+        return torch.autograd.Variable(A, requires_grad=True), torch.autograd.Variable(B, requires_grad=True)
+    
     ########## HELPER FUNCTION // A CONSTRAINTS ##########
     def _apply_constraints(self, A):
         m = nn.Softmax(dim=0)
         return m(A)
     
     ########## COMPUTE ARCHETYPES FUNCTION OF CAA ##########
-    def _compute_archetypes(self, X, K, p, n_iter, lr, mute,columns,with_synthetic_data = False, early_stopping = False, for_hotstart_usage = False):
-
+    def _compute_archetypes(self, X, K, p, n_iter, lr, mute,columns,with_synthetic_data = False, early_stopping = False, for_hotstart_usage = False, seed=None):
         ########## INITIALIZATION ##########
         self.RSS = []
         start = timer()
         if not mute:
             loading_bar = _loading_bar(n_iter, "Conventional Arhcetypal Analysis")
-        N, _ = X.T.shape
+        self.N, _ = X.T.shape
         Xt = torch.tensor(X,requires_grad=False).float()
-        A = torch.autograd.Variable(torch.rand(K, N), requires_grad=True)
-        B = torch.autograd.Variable(torch.rand(N, K), requires_grad=True)
+        A, B = self._init_AB(seed=seed, K=K)
         optimizer = optim.Adam([A, B], amsgrad = True, lr = lr)
         
         ########## ANALYSIS ##########
@@ -47,7 +56,7 @@ class _CAA:
                 loading_bar._update()
             optimizer.zero_grad()
             L = self._error(Xt, self._apply_constraints(B), self._apply_constraints(A))
-            self.RSS.append(L.detach().numpy())
+            self.RSS.append(float(L.detach().numpy()))
             L.backward()
             optimizer.step()
 
@@ -59,8 +68,6 @@ class _CAA:
                         print("Analysis ended due to early stopping.\n")
                     break
         
-        
-
         ########## POST ANALYSIS ##########
         A_f = self._apply_constraints(A).detach().numpy()
         B_f = self._apply_constraints(B).detach().numpy()
@@ -75,5 +82,6 @@ class _CAA:
 
         if not for_hotstart_usage:
             return result
+        
         else:
             return A.detach().numpy(), B.detach().numpy()

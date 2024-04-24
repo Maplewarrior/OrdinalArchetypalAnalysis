@@ -74,6 +74,17 @@ class _OAA:
         current_avg = np.mean(self.loss[-100:])
         total_imp = (self.loss[-(i-1)]-self.loss[-1])
         return (last_avg-current_avg) < total_imp*1e-5
+    
+    ########## HELPER FUNCTION // INITIALIZE A AND B MATRICES ##########
+    def _init_AB(self, seed: int, K: int):
+        if seed is not None:
+            torch.manual_seed(seed)
+        
+        A = torch.log(torch.rand((self.N, K)))
+        A /= A.sum(dim=0)
+        B = torch.log(torch.rand((K, self.N)))
+        B /=  B.sum(dim=0)
+        return torch.autograd.Variable(A, requires_grad=True), torch.autograd.Variable(B, requires_grad=True)
 
     ########## HELPER FUNCTION // A AND B ##########
     def _apply_constraints_AB(self,A):
@@ -170,7 +181,8 @@ class _OAA:
         for_hotstart_usage = False,
         sigma_cap = False,
         beta_regulators = False,
-        alternating = False):
+        alternating = False,
+        seed=None):
         
         ########## INITIALIZATION OF GENERAL VARIABLES ##########
         self.N, self.M = len(X.T), len(X.T[0,:])
@@ -209,8 +221,9 @@ class _OAA:
                 A_non_constraint = torch.autograd.Variable(torch.tensor(A_non_constraint_np.T), requires_grad=True)
                 B_non_constraint = torch.autograd.Variable(torch.tensor(B_non_constraint_np.T), requires_grad=True)
             else:
-                A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
-                B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
+                # A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
+                # B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
+                A_non_constraint, B_non_constraint = self._init_AB(seed=seed, K=K)
             b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
             if sigma_cap:
                 sigma_non_constraint = torch.tensor(1e-3, requires_grad=False)
@@ -240,7 +253,7 @@ class _OAA:
                 loading_bar._update()
             optimizer.zero_grad()
             L = self._error(Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint,c1_non_constraint,c2,sigma_cap,beta_regulators)
-            self.loss.append(L.detach().numpy())
+            self.loss.append(float(L.detach().numpy()))
             L.backward()
             optimizer.step()
 

@@ -9,8 +9,6 @@ from src.utils.AA_result_class import _OAA_result
 from src.misc.loading_bar_class import _loading_bar
 from src.methods.OAA_class import _OAA
 
-import pdb
-
 ########## ORDINAL ARCHETYPAL ANALYSIS CLASS ##########
 class _RBOAA:
 
@@ -69,6 +67,17 @@ class _RBOAA:
         current_avg = np.mean(self.loss[-100:])
         total_imp = (self.loss[-(i-1)]-self.loss[-1])
         return (last_avg-current_avg) < total_imp*1e-5
+
+    ########## HELPER FUNCTION // INITIALIZE A AND B MATRICES ##########
+    def _init_AB(self, seed: int, K: int):
+        if seed is not None:
+            torch.manual_seed(seed)
+        
+        A = torch.log(torch.rand((self.N, K)))
+        A /= A.sum(dim=0)
+        B = torch.log(torch.rand((K, self.N)))
+        B /=  B.sum(dim=0)
+        return torch.autograd.Variable(A, requires_grad=True), torch.autograd.Variable(B, requires_grad=True)
 
     ########## HELPER FUNCTION // A AND B ##########
     def _apply_constraints_AB(self,A):
@@ -149,7 +158,8 @@ class _RBOAA:
         for_hotstart_usage = False,
         hotstart_alternating = False,
         alternating = False,
-        beta_regulators = False):
+        beta_regulators = False,
+        seed=None):
 
         ########## INITIALIZATION ##########
         self.N, self.M = len(X.T), len(X.T[0,:])
@@ -158,11 +168,10 @@ class _RBOAA:
         self.M_arange = [n for n in range(self.N) for m in range(self.M)]
         self.p = p
         self.loss = []
-        
 
         ########## INITIALIZATION OF OPTIMIZED VARIABLES // ALTERNATING ##########
         if alternating:
-            optimizer, A_non_constraint, B_non_constraint, b_non_constraint, sigma_non_constraint, c1_non_constraint, c2 = self._compute_archetypes(X, K, p, n_iter, lr, mute, columns, early_stopping = early_stopping, backup_itterations=backup_itterations, with_OAA_initialization=with_OAA_initialization, for_hotstart_usage=True, alternating=False, hotstart_alternating=alternating, beta_regulators=beta_regulators)
+            optimizer, A_non_constraint, B_non_constraint, b_non_constraint, sigma_non_constraint, c1_non_constraint, c2 = self._compute_archetypes(X, K, p, n_iter, lr, mute, columns, early_stopping = early_stopping, backup_itterations=backup_itterations, with_OAA_initialization=with_OAA_initialization, for_hotstart_usage=True, alternating=False, hotstart_alternating=alternating, beta_regulators=beta_regulators, seed=seed)
             sigma_non_constraint.requires_grad_(True)
 
 
@@ -171,7 +180,7 @@ class _RBOAA:
             if not mute:
                 print("\nPerforming OAA for initialization of RBOAA.")
             OAA = _OAA()
-            _, A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, with_CAA_initialization=False, early_stopping = early_stopping, backup_itterations=backup_itterations, for_hotstart_usage=True,alternating=hotstart_alternating,beta_regulators=beta_regulators)
+            _, A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, with_CAA_initialization=False, early_stopping = early_stopping, backup_itterations=backup_itterations, for_hotstart_usage=True,alternating=hotstart_alternating,beta_regulators=beta_regulators, seed=seed)
             A_non_constraint = A_hot.clone().detach().requires_grad_(True)
             B_non_constraint = B_hot.clone().detach().requires_grad_(True)
             b_non_constraint = b_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
@@ -193,8 +202,9 @@ class _RBOAA:
 
         ########## INITIALIZATION OF OPTIMIZED VARIABLES // REGULAR ##########
         else:
-            A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
-            B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
+            # A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
+            # B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
+            A_non_constraint, B_non_constraint = self._init_AB(seed=seed, K=K)
             b_non_constraint = torch.autograd.Variable(torch.rand(self.N, p), requires_grad=True)
             c1_non_constraint = torch.autograd.Variable(torch.tensor([0.5414]).repeat(self.N,1), requires_grad=True)
             c2 = torch.autograd.Variable(torch.tensor([0.0]).repeat(self.N,1), requires_grad=True)
@@ -224,7 +234,7 @@ class _RBOAA:
                 loading_bar._update()
             optimizer.zero_grad()
             L = self._error(Xt,A_non_constraint,B_non_constraint,b_non_constraint,sigma_non_constraint,c1_non_constraint,c2,for_hotstart_usage,beta_regulators)
-            self.loss.append(L.detach().numpy())
+            self.loss.append(float(L.detach().numpy()))
             L.backward()
             optimizer.step()
 
