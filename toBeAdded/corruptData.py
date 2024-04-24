@@ -1,6 +1,7 @@
 import numpy as np
 
 def corruptData(data, corruption_rate,likertScale):
+    np.random.seed(0)
 
     ## Number of data points to corrupt
     cor_Perc = data.size*corruption_rate
