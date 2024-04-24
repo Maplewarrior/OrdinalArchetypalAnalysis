@@ -10,13 +10,15 @@ import numpy as np
 
 def loss_archetype_plot(results_path: str = 'synthetic_results/1000_complex_results.json'):
     """
-    A plot over the final loss obtained as a function of the number of archetypes
+    A plot over the final loss obtained as a function of the number of archetypes.
+    Parameters:
+        - results_path (str): Path to a .json results file created by running ResultMaker.get_results()
     """
+
     with open(f'{results_path}', 'r') as f:
         result = json.load(f)
         df_res = pd.DataFrame(result)
 
-    
     methods = df_res['method'].unique()
     methods_colors = dict(zip(methods.tolist(), ['r', 'g', 'b', 'y']))
     plt.figure(figsize=(6,4))
