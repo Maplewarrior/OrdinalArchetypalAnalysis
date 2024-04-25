@@ -14,8 +14,11 @@ matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
 def loss_archetype_plot(results_path: str = 'synthetic_results/1000_complex_results.json'):
     """
-    A plot over the final loss obtained as a function of the number of archetypes
+    A plot over the final loss obtained as a function of the number of archetypes.
+    Parameters:
+        - results_path (str): Path to a .json results file created by running ResultMaker.get_results()
     """
+
     with open(f'{results_path}', 'r') as f:
         result = json.load(f)
         df_res = pd.DataFrame(result)
