@@ -1,4 +1,5 @@
 import json
+import numpy as np
 import pdb
 import pandas as pd
 from src.inference.ResultMaker import ResultMaker
@@ -82,9 +83,9 @@ def main():
                         'mute': True,
                         'savefolder': 'naive_results',
                         'load_data': True,
-                        'X_path': None,
-                        'Z_path': None,
-                        'A_path': None}
+                        'X_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
+                        'Z_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
+                        'A_path': 'SyntheticData/1000_respondents/Data_naive_large.npy'}
 
     naive_OSM_data_params = {'N':1000, # irrelevant if load_data = True
                             'M':20, # irrelevant if load_data = True
@@ -94,9 +95,9 @@ def main():
                             'mute': True,
                             'savefolder': 'naive_OSM_results',
                             'load_data': True,
-                            'X_path': None,
-                            'Z_path': None,
-                            'A_path': None}
+                            'X_path': 'SyntheticData/1000_respondents/OSM/data_naive_OSM_large.csv',
+                            'Z_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
+                            'A_path': 'SyntheticData/1000_respondents/Data_naive_large.npy'}
 
     naive_corrupted_data_params = {'N':1000, # irrelevant if load_data = True
                                   'M':20, # irrelevant if load_data = True
@@ -106,9 +107,9 @@ def main():
                                   'mute': True,
                                   'savefolder': 'naive_corrupted_results',
                                   'load_data': True,
-                                  'X_path': None,
-                                  'Z_path': None,
-                                  'A_path': None}
+                                  'X_path': 'SyntheticData/1000_respondents/Data_naive_large_corrupted.npz',
+                                  'Z_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
+                                  'A_path': 'SyntheticData/1000_respondents/Data_naive_large.npy'}
 
     naive_OSM_corrupted_data_params = {'N':1000, # irrelevant if load_data = True
                                        'M':20, # irrelevant if load_data = True
@@ -118,9 +119,9 @@ def main():
                                        'mute': True,
                                        'savefolder': 'naive_OSM_corrupted_results',
                                        'load_data': True,
-                                       'X_path': None,
-                                       'Z_path': None,
-                                       'A_path': None}
+                                       'X_path': 'SyntheticData/1000_respondents/OSM/data_naive_OSM_large_corrupted.csv',
+                                       'Z_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
+                                       'A_path': 'SyntheticData/1000_respondents/Data_naive_large.npy'}
 
     ESS8_data_params = {}
 
@@ -142,7 +143,7 @@ if __name__ == '__main__':
     # df = filter_ESS8_data('RealData/ESS8_data.csv', only_GB=False)
     # filepath = "results/test_runs.json"
     # main(filepath=filepath)
-    main()
+    # main()
     # import numpy as np
     # A = np.array([1, 2, 3])
     # L = list(A)
@@ -150,5 +151,21 @@ if __name__ == '__main__':
     # df = mean_across_runs('synthetic_results/50_all_combinations.json')
     # df = mean_across_runs('synthetic_results/1000_all_combinations.json')
     # print(df)
+    
+    # data = np.load('SyntheticData/1000_respondents/Data_naive_large_corrupted.npz')
+    # X = data['arr_0']
+
+
+    
+    # tmp = np.load('SyntheticData/1000_respondents/Data_naive_large.npy', allow_pickle=False)
+    # t = tmp.tolist()
+    df_naive = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large.csv', index_col=0)
+    df_naive_c = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large_corrupted.csv', index_col=0)
+
+    df_complex = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large.csv', index_col=0)
+    df_complex_c = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large_corrupted.csv', index_col=0)
+    import multiprocessing
+    print(multiprocessing.cpu_count())
+    pdb.set_trace()
 
 

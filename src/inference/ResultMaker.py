@@ -60,26 +60,45 @@ class ResultMaker:
         # B_savename = f'B_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
         # np.save(f'{self.savedir}/matrices/{B_savename}', res_obj.B)
     
-    def load_X(self, path: str):
-        _, ext = os.path.splitext(path)
+    def load_data(self, X_path: str, Z_path: str, A_path: str):
+        _, X_ext = os.path.splitext(X_path)
         
-        if ext == '.npy':
-            self._X = np.load(path)
+        if X_ext == '.npy':
+            try: # complex data
+                self._X = np.load(X_path)
 
-        elif ext == '.npz':
-            with np.load(path) as data:
-                print("NPZ DATA:")
-                print(data)
+            except ValueError: # Naive data stored as pickle object in .npy file
+                tmp = np.load(X_path, allow_pickle=True)
+                t = tmp.tolist()
+                self._X = t.X
 
-        elif ext == '.csv':
-            X = pd.read_csv('path').values
+            self.load_AZ_npy(Z_path, A_path)
+
+        elif X_ext == '.npz': # Naive/complex corrupted 
+            data = np.load(X_path)
+            self._X = data['arr_0']
+            assert X.shape == (20, 1000), 'X not correctly shaped when loading .npz!'
+            self.load_AZ_npy(Z_path, A_path) # complex + naive handled
+
+        elif X_ext == '.csv': # complex/naive OSM + OSM corrupted
+            X = pd.read_csv(X_path, index_col=0).values
             self._X = X.T if X.shape[0] > X.shape[1] else X # M x N matrix
+            self.load_AZ_npy(Z_path, A_path)
         
-        elif ext == '.pkl':
+        elif X_ext == '.pkl':
             raise NotImplementedError()
-        
-        
 
+    
+    def load_AZ_npy(self, Z_path: str, A_path:str):
+        try: # for complex
+            self._Z = np.load(Z_path)
+            self._A = np.load(A_path)
+
+        except ValueError: # for naive
+            tmp = np.load(Z_path, allow_pickle=True)
+            t = tmp.tolist()
+            self._A = t.A
+            self._Z = t.Z
     
     def make_synthetic_data(self, **kwargs):
         AA = AA_class()
@@ -103,24 +122,14 @@ class ResultMaker:
             #     json.dump(kwargs, f)
 
         else:
-            _, ext = os.path.splitext(kwargs['X_path'])
-            if ext == '.npy':     
-                self._X = np.load(kwargs['X_path'])
-                self._Z = np.load(kwargs['Z_path'])
-                self._A = np.load(kwargs['A_path'])
-                self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
-            elif ext == '.pkl':
-                raise NotImplementedError()
-                # f_X = open(kwargs['X_path'], 'rb')
-                # X_data = pickle.load(f_X)
-                # self._X = np.array(X_data)
-                # f_Z = open(kwargs['Z_path'], 'rb')
-                # Z_data = pickle.load(f_Z)
-                # self._Z = np.array(Z_data)
-                # self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
-                
-            else:
-                print(f'Unsuported filetype for synthetic data: "{ext}"')
+            self.load_data(kwargs['X_path'], kwargs['Z_path'], kwargs['A_path'])
+        print("X", self._X.shape)
+        print("A", self._A.shape)
+        print("Z", self._Z.shape)
+        assert list(self._X.shape) == [20, 1000], 'Shape mismatch for X!'
+        assert list(self._Z.shape) == [20, 3], 'Shape mismatch for X!'
+        assert list(self._A.shape) == [3, 1000], 'Shape mismatch for X!'
+        
     
     def make_analysis(self, results, run_specs, repeat_num: int):
         if run_specs['method'] == 'OAA':
@@ -229,4 +238,5 @@ class ResultMaker:
                     for b_param in b_params:
                         all_data_params.append([sigma, a_param, b_param, sigma_std])
         with multiprocessing.Pool(multiprocessing.cpu_count()-1) as p:
+        # with multiprocessing.Pool(multiprocessing.cpu_count()//4) as p:
             p.map(self.result_helper, all_data_params)
