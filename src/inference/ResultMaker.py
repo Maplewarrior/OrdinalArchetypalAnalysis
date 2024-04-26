@@ -3,6 +3,7 @@ import json
 import os
 import pdb
 import pickle
+import pandas as pd
 
 from src.AAM import AA as AA_class
 from src.utils.eval_measures import NMI, MCC
@@ -31,11 +32,12 @@ class ResultMaker:
                              'alternating': [], 'n_archetypes': [],
                              'NMI': [], 'MCC': [], 'loss': []}
         N = self.data_params['N']
-        self.savedir = f'synthetic_results/{N}_results_complex'
+
+        savefolder = self.data_params['savefolder']
+        self.savedir = f'synthetic_results/{savefolder}'
         if not os.path.exists(self.savedir):
             os.mkdir(self.savedir)
         
-
     def update_results(self, results, run):
         assert sorted(run.keys()) == sorted(results.keys()), 'Missing specifications for storing results!'
         for key, val in run.items():
@@ -43,17 +45,41 @@ class ResultMaker:
 
         return results
     
-    def save_AZ_matrices(self, res_obj, repeat_num: int, n_archetypes: int):
-        if not os.path.exists(f'{self.savedir}/matrices'):
-            os.mkdir(f'{self.savedir}/matrices')
+    def save_result_obj(self, res_obj, repeat_num: int, n_archetypes: int):
+        if not os.path.exists(f'{self.savedir}/{res_obj.type}_objects'):
+            os.mkdir(f'{self.savedir}/{res_obj.type}_objects')
         
-        # Save archetype matrix
-        Z_savename = f'Z_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
-        np.save(f'{self.savedir}/matrices/{Z_savename}', res_obj.Z)
+        with open(f'{self.savedir}/{res_obj.type}_objects/{res_obj.type}_K={n_archetypes}_rep={repeat_num}', 'wb') as f:
+            pickle.dump(res_obj, f, pickle.HIGHEST_PROTOCOL)
+        
+        # # Save respondent weighting matrix
+        # A_savename = f'{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
+        # np.save(f'{self.savedir}/matrices/{A_savename}', res_obj.A)
 
-        # Save respondent weighting matrix
-        A_savename = f'A_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
-        np.save(f'{self.savedir}/matrices/{A_savename}', res_obj.A)
+        # # Save archetype matrix (X@B = archetypes)
+        # B_savename = f'B_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
+        # np.save(f'{self.savedir}/matrices/{B_savename}', res_obj.B)
+    
+    def load_X(self, path: str):
+        _, ext = os.path.splitext(path)
+        
+        if ext == '.npy':
+            self._X = np.load(path)
+
+        elif ext == '.npz':
+            with np.load(path) as data:
+                print("NPZ DATA:")
+                print(data)
+
+        elif ext == '.csv':
+            X = pd.read_csv('path').values
+            self._X = X.T if X.shape[0] > X.shape[1] else X # M x N matrix
+        
+        elif ext == '.pkl':
+            raise NotImplementedError()
+        
+        
+
     
     def make_synthetic_data(self, **kwargs):
         AA = AA_class()
@@ -64,19 +90,20 @@ class ResultMaker:
             self._Z = AA._synthetic_data.Z # extract archetype matrix
             self._A = AA._synthetic_data.A # extract weighting matrix
             ### Save synthetic data
-            N = kwargs['N']
-            dir = f'{N}_respondents_complex'
-            if not os.path.exists(dir):
-                os.mkdir(dir)
+
+            # N = kwargs['N']
+            # dir = f'{N}_respondents_complex'
+            # if not os.path.exists(dir):
+            #     os.mkdir(dir)
             
-            np.save(f'{dir}/X.npy', self._X)
-            np.save(f'{dir}/Z.npy',self._Z)
-            np.save(f'{dir}/A.npy',self._A)
-            with open(f'{dir}/data_parameters.json', 'w') as f:
-                json.dump(kwargs, f)
+            # np.save(f'{dir}/X.npy', self._X)
+            # np.save(f'{dir}/Z.npy',self._Z)
+            # np.save(f'{dir}/A.npy',self._A)
+            # with open(f'{dir}/data_parameters.json', 'w') as f:
+            #     json.dump(kwargs, f)
 
         else:
-            name, ext = os.path.splitext(kwargs['X_path'])
+            _, ext = os.path.splitext(kwargs['X_path'])
             if ext == '.npy':     
                 self._X = np.load(kwargs['X_path'])
                 self._Z = np.load(kwargs['Z_path'])
@@ -118,7 +145,7 @@ class ResultMaker:
             run_specs['NMI'] = _NMI
             run_specs['MCC'] = _MCC
             run_specs['loss'] = list(OAA_res.loss)
-            self.save_AZ_matrices(OAA_res, repeat_num, run_specs['n_archetypes'])
+            self.save_result_obj(OAA_res, repeat_num, run_specs['n_archetypes'])
             self.update_results(results, run_specs) # update results
             
         elif run_specs['method'] == 'RBOAA':
@@ -139,10 +166,9 @@ class ResultMaker:
             run_specs['NMI'] = _NMI
             run_specs['MCC'] = _MCC
             run_specs['loss'] = list(RBOAA_res.loss)
-            self.save_AZ_matrices(RBOAA_res, repeat_num, run_specs['n_archetypes'])
+            self.save_result_obj(RBOAA_res, repeat_num, run_specs['n_archetypes'])
             self.update_results(results, run_specs) # update results
 
-        
         else: # do CAA analysis (has no tunable parameters)
             CAA = _CAA()
             # run_specs = {'method': 'CAA', 'with_init': False, 'beta_reg': False, 'alternating': False, 'MCC': None, 'NMI': None}
@@ -153,7 +179,7 @@ class ResultMaker:
             run_specs['NMI'] = _NMI
             run_specs['MCC'] = _MCC
             run_specs['loss'] = list(CAA_res.loss)
-            self.save_AZ_matrices(CAA_res, repeat_num, run_specs['n_archetypes'])
+            self.save_result_obj(CAA_res, repeat_num, run_specs['n_archetypes'])
             self.update_results(results, run_specs)
     
     def result_helper(self, hyperparams: list):
