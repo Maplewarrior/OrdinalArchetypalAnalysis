@@ -12,7 +12,8 @@ import seaborn as sns
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
-def loss_archetype_plot(results_path: str = 'synthetic_results/1000_complex_results.json'):
+# TODO: Make some nice error handling for K_list. Would be nice to have a default value for K_list
+def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_complex_results.json'):
     """
     A plot over the final loss obtained as a function of the number of archetypes.
     Parameters:
@@ -31,15 +32,14 @@ def loss_archetype_plot(results_path: str = 'synthetic_results/1000_complex_resu
 
     def add_curve(analysis_archetypes, losses, is_min: bool, method: str):
         if is_min:
-            plt.scatter(analysis_archetypes, losses, label=f'{method}', c=methods_colors[method])
-            plt.plot(analysis_archetypes, losses, c=methods_colors[method])
+            plt.plot(analysis_archetypes, losses,"-o",c=methods_colors[method],label=f'{method}')
         else:
             # plt.scatter(analysis_archetypes, losses)
             plt.plot(analysis_archetypes, losses, alpha=0.3, c=methods_colors[method])
     
     for method in methods:
         df_losses = df_res.loc[df_res['method'] == method][['n_archetypes', 'loss']]
-        analysis_archetypes = df_losses['n_archetypes'].unique().tolist()
+        analysis_archetypes = K_list #df_losses['n_archetypes'].unique().tolist()
         
         all_losses = [df_losses.loc[df_losses['n_archetypes'] == e]['loss'].values for e in analysis_archetypes]
         analysis_archetypes = list(map(str, analysis_archetypes))
@@ -64,20 +64,21 @@ def loss_archetype_plot(results_path: str = 'synthetic_results/1000_complex_resu
 
 # loss_archetype_plot(df_res_20)
 
-def NMI_archetypes(results_path: str = 'synthetic_results/1000_complex_results.json'):
+def NMI_archetypes(K_list, results_path: str = 'synthetic_results/1000_complex_results.json'):
     """
     A plot over the final loss obtained as a function of the number of archetypes
     """
     with open(f'{results_path}', 'r') as f:
         result = json.load(f)
         df_res = pd.DataFrame(result)
-
+    
+    df_res = df_res[df_res['n_archetypes'].isin(K_list)]
     df_res.method = df_res.method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'AA': 'AA', 'CAA': 'AA'})
 
     
     methods = df_res['method'].unique()
     methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
-    fig, ax = plt.subplots(1,1,figsize = (15,5))
+    fig, ax = plt.subplots(1,1,figsize = (15,5), layout='constrained')
 
     ax = sns.boxplot(x='n_archetypes', y="NMI", hue="method", showmeans=True, data=df_res,palette=methods_colors,meanprops={"marker": "s", "markerfacecolor": "white", "markeredgecolor": "black"})
     ax.xaxis.grid(True, which='major')
@@ -91,3 +92,4 @@ def NMI_archetypes(results_path: str = 'synthetic_results/1000_complex_results.j
     plt.legend(fontsize=20)
 
     plt.show()
+
