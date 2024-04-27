@@ -5,6 +5,8 @@ import pdb
 import pickle
 import pandas as pd
 
+from src.utils.filter_ESS8 import filter_ESS8_data
+
 from src.AAM import AA as AA_class
 from src.utils.eval_measures import NMI, MCC
 from src.methods.CAA_class import _CAA
@@ -15,8 +17,8 @@ from src.methods.RBOAA_class import _RBOAA
 from src.methods.OAA_class_old import _OAA as _OAA_old
 from src.methods.RBOAA_class_old import _RBOAA as _RBOAA_old
 
-import multiprocessing
 
+import multiprocessing
 class ResultMaker:
     def __init__(self, data_params: dict, model_options: dict, lrs: dict) -> None:
         ### set global parameters
@@ -31,8 +33,10 @@ class ResultMaker:
         self.results_init = {'method': [], 'with_init': [], 'beta_reg': [],
                              'alternating': [], 'n_archetypes': [],
                              'NMI': [], 'MCC': [], 'loss': []}
-        N = self.data_params['N']
-
+        self.results_ESS8_init = {'method': [], 'with_init': [], 'beta_reg': [],
+                             'alternating': [], 'n_archetypes': [],
+                             'loss': []}
+        
         savefolder = self.data_params['savefolder']
         self.savedir = f'synthetic_results/{savefolder}'
         if not os.path.exists(self.savedir):
@@ -77,17 +81,22 @@ class ResultMaker:
         elif X_ext == '.npz': # Naive/complex corrupted 
             data = np.load(X_path)
             self._X = data['arr_0']
-            assert X.shape == (20, 1000), 'X not correctly shaped when loading .npz!'
             self.load_AZ_npy(Z_path, A_path) # complex + naive handled
 
         elif X_ext == '.csv': # complex/naive OSM + OSM corrupted
             X = pd.read_csv(X_path, index_col=0).values
             self._X = X.T if X.shape[0] > X.shape[1] else X # M x N matrix
             self.load_AZ_npy(Z_path, A_path)
+
+        elif X_path == 'ESS8_GB': # load ESS8 subset 
+            self._X, self.columns = filter_ESS8_data('RealData/ESS8_data.csv', only_GB=True)
+
+        elif X_path == 'ESS8': # load full ESS8 dataset
+            self._X, self.columns = filter_ESS8_data('RealData/ESS8_data.csv', only_GB=False)
         
         elif X_ext == '.pkl':
             raise NotImplementedError()
-
+    
     
     def load_AZ_npy(self, Z_path: str, A_path:str):
         try: # for complex
@@ -129,6 +138,7 @@ class ResultMaker:
         assert list(self._X.shape) == [20, 1000], 'Shape mismatch for X!'
         assert list(self._Z.shape) == [20, 3], 'Shape mismatch for X!'
         assert list(self._A.shape) == [3, 1000], 'Shape mismatch for X!'
+        self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
         
     
     def make_analysis(self, results, run_specs, repeat_num: int):
@@ -178,7 +188,7 @@ class ResultMaker:
             self.save_result_obj(RBOAA_res, repeat_num, run_specs['n_archetypes'])
             self.update_results(results, run_specs) # update results
 
-        else: # do CAA analysis (has no tunable parameters)
+        elif run_specs['method'] == 'CAA': # do CAA analysis (has no tunable parameters)
             CAA = _CAA()
             # run_specs = {'method': 'CAA', 'with_init': False, 'beta_reg': False, 'alternating': False, 'MCC': None, 'NMI': None}
             CAA_res = CAA._compute_archetypes(X=self._X, K=run_specs['n_archetypes'], p=self.data_params['p'], n_iter=self.n_iter, lr=self.CAA_lr, mute=self.data_params['mute'], 
@@ -190,7 +200,10 @@ class ResultMaker:
             run_specs['loss'] = list(CAA_res.loss)
             self.save_result_obj(CAA_res, repeat_num, run_specs['n_archetypes'])
             self.update_results(results, run_specs)
-    
+        
+        else:
+            return
+        
     def result_helper(self, hyperparams: list):
         """
         Creates results for all combinations of model hyperparameters specified.
@@ -240,3 +253,62 @@ class ResultMaker:
         with multiprocessing.Pool(multiprocessing.cpu_count()-1) as p:
         # with multiprocessing.Pool(multiprocessing.cpu_count()//4) as p:
             p.map(self.result_helper, all_data_params)
+
+    
+    def make_ESS8_analysis(self, results, run_specs, repeat_num: int):
+        if run_specs['method'] == 'OAA':
+            ### run OAA analysis
+            OAA = _OAA()
+            # OAA_res = OAA._compute_archetypes(self._X, run_spects['n_archetypes], self.data_params['p'], self.n_iter, self.OAA_lr, mute=self.data_params['mute'], with_CAA_initialization=run_specs['with_init'],columns=self.columns, alternating=run_specs['alternating'], beta_regulators=run_specs['beta_reg'], early_stopping=self.early_stopping)
+            
+            ### Hard code OAA_res to never do a CAA init
+            OAA_res = OAA._compute_archetypes(self._X, run_specs['n_archetypes'], self.data_params['p'], self.n_iter, self.OAA_lr, mute=self.data_params['mute'], with_CAA_initialization=False,columns=self.columns, alternating=run_specs['alternating'], beta_regulators=run_specs['beta_reg'], early_stopping=self.early_stopping, seed=repeat_num)
+            run_specs['with_init'] = False
+            run_specs['loss'] = list(OAA_res.loss)
+            self.save_result_obj(OAA_res, repeat_num, run_specs['n_archetypes'])
+            self.update_results(results, run_specs) # update results
+            
+        elif run_specs['method'] == 'RBOAA':
+            ### run RBOAA analysis
+            RBOAA = _RBOAA()
+            # run_specs = {'method': 'RBOAA', 'with_init': False, 'beta_reg': False, 'alternating': False, 'MCC': None, 'NMI': None}
+            RBOAA_res = RBOAA._compute_archetypes(self._X, run_specs['n_archetypes'], self.data_params['p'], self.n_iter, self.OAA_lr, mute=self.data_params['mute'], with_OAA_initialization=run_specs['with_init'],columns=self.columns, alternating=run_specs['alternating'], beta_regulators=run_specs['beta_reg'], early_stopping=self.early_stopping, backup_itterations=True, seed=repeat_num)
+            run_specs['loss'] = list(RBOAA_res.loss)
+            self.save_result_obj(RBOAA_res, repeat_num, run_specs['n_archetypes'])
+            self.update_results(results, run_specs) # update results
+
+        elif run_specs['method'] == 'CAA': # do CAA analysis (has no tunable parameters)
+            CAA = _CAA()
+            # run_specs = {'method': 'CAA', 'with_init': False, 'beta_reg': False, 'alternating': False, 'MCC': None, 'NMI': None}
+            CAA_res = CAA._compute_archetypes(X=self._X, K=run_specs['n_archetypes'], p=self.data_params['p'], n_iter=self.n_iter, lr=self.CAA_lr, mute=self.data_params['mute'], 
+                                              early_stopping=self.early_stopping, columns=self.columns, with_synthetic_data=True, seed=repeat_num)
+            run_specs['loss'] = list(CAA_res.loss)
+            self.save_result_obj(CAA_res, repeat_num, run_specs['n_archetypes'])
+            self.update_results(results, run_specs)
+        
+        else:
+            return
+    
+    def get_ESS8_results(self):
+        results = self.results_ESS8_init.copy()
+        self.load_data(self.data_params['X_path'], None, None)
+        for method in self.model_options['method']:
+            for beta_reg in self.model_options['beta_reg']:
+                for alternating in self.model_options['alternating']:
+                    for _init in self.model_options['with_init']:
+                        for K in self.model_options['n_archetypes']:
+                            print(f"Doing ESS8 analysis!")
+                            for rep in range(self.n_repeats):
+                                run_specs = {'method': method, 'with_init': _init, 'beta_reg': beta_reg, 'alternating': alternating, 'n_archetypes': K, 'loss': None}
+                                try:
+                                    self.make_ESS8_analysis(results, run_specs=run_specs, repeat_num=rep)
+                                except Exception as e:
+                                    print(f"Error occured which reads: {e}\nThe specs were: {run_specs}")
+    
+        for K in self.model_options['n_archetypes']:
+            for rep in range(self.n_repeats):
+                run_specs = {'method': 'CAA', 'with_init': False, 'beta_reg': False, 'alternating': False, 'n_archetypes': K, 'loss': None}
+                self.make_ESS8_analysis(results, run_specs, repeat_num=rep)
+
+                
+            

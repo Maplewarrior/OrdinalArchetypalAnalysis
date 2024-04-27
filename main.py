@@ -17,12 +17,11 @@ def mean_across_runs(filepath: str = 'results/test_run1.json'):
     #     for _init in bool_list:
     #         for alternating in bool_list:
     #             for beta_reg in bool_list:
-    means = df_res.groupby(by=['method', 'with_init', 'alternating', 'beta_reg']).mean()
+    means = df_res[['method', 'with_init', 'alternating', 'beta_reg', 'n_archetypes', 'NMI', 'MCC']].groupby(by=['method', 'with_init', 'alternating', 'beta_reg', 'n_archetypes']).mean()
+    print(means)
     return df_res.loc[(df_res['alternating'] == False) & (df_res['method'] == 'RBOAA') & (df_res['with_init'] == True) & (df_res['beta_reg'] == True)]
 
     # means = df_res.groupby(by=['method', 'with_init', 'beta_reg', 'alternating']).mean()
-
-
 
 def main():
     complex_data_params = {'N':1000, # irrelevant if load_data = True
@@ -123,10 +122,17 @@ def main():
                                        'Z_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
                                        'A_path': 'SyntheticData/1000_respondents/Data_naive_large.npy'}
 
-    ESS8_data_params = {}
+    ESS8_data_params = {'p': 5,
+                        'mute': True,
+                        'savefolder': 'ESS8_results',
+                        'load_data': True,
+                        'X_path': 'ESS8'}
 
-    ESS8_GB_data_params = {}
-
+    ESS8_GB_data_params = {'p': 6,
+                           'mute': True,
+                           'savefolder': 'ESS8_GB_results',
+                           'load_data': True,
+                           'X_path': 'ESS8_GB'}
 
     model_options = {'method': ['RBOAA', 'OAA'],
                     'with_init': [True],
@@ -134,38 +140,47 @@ def main():
                     'beta_reg': [True],
                     'n_archetypes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                                      20, 30, 40, 50]}
+    model_options_OSM = {'method': [''],
+                        'with_init': [True],
+                        'alternating': [False],
+                        'beta_reg': [True],
+                        'n_archetypes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                        20, 30, 40, 50]}
     lrs = {} # hard coded for now
-    RM = ResultMaker(data_params=complex_data_params, model_options=model_options, lrs=lrs)
-    RM.get_results()
+    RM = ResultMaker(data_params=ESS8_GB_data_params, model_options=model_options, lrs=lrs)
+    # RM.get_results()
+    RM.get_ESS8_results()
 
 if __name__ == '__main__':
     # from src.utils.filter_ESS8 import filter_ESS8_data
     # df = filter_ESS8_data('RealData/ESS8_data.csv', only_GB=False)
     # filepath = "results/test_runs.json"
     # main(filepath=filepath)
-    # main()
+
+    
+    main()
+    
+    
     # import numpy as np
     # A = np.array([1, 2, 3])
     # L = list(A)
     # pdb.set_trace()
-    # df = mean_across_runs('synthetic_results/50_all_combinations.json')
+    # df = mean_across_runs('synthetic_results/naive_results/All_AA_results.json')
     # df = mean_across_runs('synthetic_results/1000_all_combinations.json')
     # print(df)
     
     # data = np.load('SyntheticData/1000_respondents/Data_naive_large_corrupted.npz')
     # X = data['arr_0']
-
-
     
     # tmp = np.load('SyntheticData/1000_respondents/Data_naive_large.npy', allow_pickle=False)
     # t = tmp.tolist()
-    df_naive = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large.csv', index_col=0)
-    df_naive_c = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large_corrupted.csv', index_col=0)
+    # df_naive = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large.csv', index_col=0)
+    # df_naive_c = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large_corrupted.csv', index_col=0)
 
-    df_complex = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large.csv', index_col=0)
-    df_complex_c = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large_corrupted.csv', index_col=0)
-    import multiprocessing
-    print(multiprocessing.cpu_count())
-    pdb.set_trace()
+    # df_complex = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large.csv', index_col=0)
+    # df_complex_c = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large_corrupted.csv', index_col=0)
+    # import multiprocessing
+    # print(multiprocessing.cpu_count())
+    # # pdb.set_trace()
 
 

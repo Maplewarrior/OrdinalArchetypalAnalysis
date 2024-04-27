@@ -13,6 +13,6 @@ def filter_ESS8_data(filepath: str, only_GB: bool = False):
     # extract questions 
     X = df_ESS8[question_cols].values
 
-    return X.T # array of size n_questions x n_respondents
+    return X.T, list(df_ESS8.columns) # array of size n_questions x n_respondents
 
 
