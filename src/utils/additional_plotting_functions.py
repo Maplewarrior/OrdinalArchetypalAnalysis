@@ -18,7 +18,7 @@ matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
 # TODO: Make some nice error handling for K_list. Would be nice to have a default value for K_list
-def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_complex_results.json'):
+def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_complex_results.json',results_path2: str = 'C:/Users/aejew/Downloads/AA_results/AA_results/naive_OSM_results/all_AA_results.json'):
     """
     A plot over the final loss obtained as a function of the number of archetypes.
     Parameters:
@@ -29,7 +29,15 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
         result = json.load(f)
         df_res = pd.DataFrame(result)
 
-    df_res.method = df_res.method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'AA': 'AA', 'CAA': 'AA'})    
+
+    with open(f'{results_path2}', 'r') as f:
+        result2 = json.load(f)
+        df_res2 = pd.DataFrame(result2)
+
+    df_res2.method = df_res2.method.replace({'CAA': 'TSAA'})    
+    df_res.method = df_res.method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'CAA': 'AA','TSAA': 'TSAA'})  
+
+    df_res = pd.concat([df_res,df_res2])  
     methods = df_res['method'].unique()
 
     methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
@@ -48,7 +56,9 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
     ax2.set_ylabel('SSE',fontsize=25)
 
     # TODO: Automatic set of ax2 ylim to avoid the two plots starting the same place something likemin = min(min_loss_AA, min_loss_TSOAA)*0.9 and max  = max(max_loss_AA, max_loss_TSOAA)*1.1
-    ax2.set_ylim((1000,11000))
+    #ax2.set_ylim((np.min(df_res[df_res.method=='AA'].loss[-1])-1000,np.max(df_res[df_res.method=='TSAA'].loss[0])+1000))
+    #ax.set_ylim((np.min(df_res[df_res.method=='RBOAA'].loss[-1])-1000,np.max(df_res[df_res.method=='OAA'].loss[0])+1000))
+    
 
 
     for method in methods:
@@ -64,13 +74,10 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
         min_losses = tmp[np.sort(idx)]
 
         
-        if method in ['AA','TSOAA']:
-            print(method)
-
+        if method in ['AA','TSAA']:
             
             ax2.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
             # = add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
-            print(method,min_losses[0])
 
             for rep in range(losses.shape[1]):
                 ax2.plot(analysis_archetypes, losses[:, rep], alpha=0.3, c=methods_colors[method])
@@ -78,7 +85,6 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
         else:
             ax.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
             #ax.add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
-            print(method,min_losses[0])
 
             for rep in range(losses.shape[1]):
                 ax.plot(analysis_archetypes, losses[:, rep], alpha=0.3, c=methods_colors[method])
@@ -103,18 +109,25 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
 
 # loss_archetype_plot(df_res_20)
 
-def NMI_archetypes(K_list, results_path: str = 'synthetic_results/1000_complex_results.json'):
+def NMI_archetypes(K_list, results_path: str = 'synthetic_results/1000_complex_results.json',results_path2: str = 'C:/Users/aejew/Downloads/AA_results/AA_results/naive_OSM_results/all_AA_results.json'):
     """
     A plot over the final loss obtained as a function of the number of archetypes
     """
     with open(f'{results_path}', 'r') as f:
         result = json.load(f)
         df_res = pd.DataFrame(result)
-    
-    df_res = df_res[df_res['n_archetypes'].isin(K_list)]
-    df_res.method = df_res.method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'AA': 'AA', 'CAA': 'AA'})
 
     
+    with open(f'{results_path2}', 'r') as f:
+        result2 = json.load(f)
+        df_res2 = pd.DataFrame(result2)
+
+    df_res2.method = df_res2.method.replace({'CAA': 'TSAA'})    
+    df_res.method = df_res.method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'CAA': 'AA','TSAA': 'TSAA'})  
+
+    df_res = pd.concat([df_res,df_res2])      
+    df_res = df_res[df_res['n_archetypes'].isin(K_list)]
+
     methods = df_res['method'].unique()
     methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
     fig, ax = plt.subplots(1,1,figsize = (15,5), layout='constrained')
