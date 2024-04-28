@@ -133,12 +133,12 @@ class ResultMaker:
         else:
             self.load_data(kwargs['X_path'], kwargs['Z_path'], kwargs['A_path'])
         print("X", self._X.shape)
-        print("A", self._A.shape)
-        print("Z", self._Z.shape)
-        assert list(self._X.shape) == [20, 1000], 'Shape mismatch for X!'
-        assert list(self._Z.shape) == [20, 3], 'Shape mismatch for X!'
-        assert list(self._A.shape) == [3, 1000], 'Shape mismatch for X!'
-        self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
+        # print("A", self._A.shape)
+        # print("Z", self._Z.shape)
+        # assert list(self._X.shape) == [20, 1000], 'Shape mismatch for X!'
+        # assert list(self._Z.shape) == [20, 3], 'Shape mismatch for X!'
+        # assert list(self._A.shape) == [3, 1000], 'Shape mismatch for X!'
+        # self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
         
     
     def make_analysis(self, results, run_specs, repeat_num: int):

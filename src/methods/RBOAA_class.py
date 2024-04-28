@@ -33,7 +33,8 @@ class _RBOAA:
         B_f = self._apply_constraints_AB(B_non_constraint).detach().numpy()
         b_f = self._apply_constraints_beta(b_non_constraint,c1_non_constraint,c2,beta_regulators)
         alphas_f = self._calculate_alpha(b_f,beta_regulators)
-        b_f = b_f[:, 1:-1]
+        # b_f = b_f[:, 1:-1]
+        b_f = b_f # MHA added to keep boundaries (b_f = len(LikertScale) + 1)
         X_tilde_f = self._calculate_X_tilde(Xt,alphas_f).detach().numpy()
         Z_tilde_f = (self._apply_constraints_AB(B_non_constraint).detach().numpy() @ X_tilde_f)
         sigma_f = self._apply_constraints_sigma(sigma_non_constraint,global_sigma).detach().numpy()
