@@ -91,7 +91,6 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
     
 
     # Not sure what diff between minor and major is
-
     ax.tick_params(axis='both', which='major', labelsize=20)
     ax.tick_params(axis='both', which='minor', labelsize=20)
 
@@ -143,7 +142,6 @@ def NMI_archetypes(K_list, results_path: str = 'synthetic_results/1000_complex_r
     ax.set_ylim([0,1.05])
     plt.legend(fontsize=25,loc="upper right")
 
-    plt.show()
 
 
 K_list = [2,3,4,5,6,7,8,9,10]
