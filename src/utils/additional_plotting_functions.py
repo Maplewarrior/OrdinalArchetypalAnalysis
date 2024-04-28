@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
 import seaborn as sns
+from colormap import rgb2hex, rgb2hls, hls2rgb
+import matplotlib.pyplot as plt
+
 import itertools
 from src.utils.eval_measures import NMI, MCC
 
@@ -30,7 +33,7 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
     methods = df_res['method'].unique()
 
     methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
-    plt.figure(figsize=(15,5))
+    fig, ax = plt.subplots(figsize = (15,5), layout='constrained')
 
     def add_curve(analysis_archetypes, losses, is_min: bool, method: str):
         if is_min:
@@ -38,11 +41,20 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
         else:
             # plt.scatter(analysis_archetypes, losses)
             plt.plot(analysis_archetypes, losses, alpha=0.3, c=methods_colors[method])
-    
+
+    ax.set_xlabel('Number of archetypes', fontsize=25)
+    ax.set_ylabel('Cross entropy loss', fontsize=25)
+    ax2 = ax.twinx()
+    ax2.set_ylabel('SSE',fontsize=25)
+
+    # TODO: Automatic set of ax2 ylim to avoid the two plots starting the same place something likemin = min(min_loss_AA, min_loss_TSOAA)*0.9 and max  = max(max_loss_AA, max_loss_TSOAA)*1.1
+    ax2.set_ylim((1000,11000))
+
+
     for method in methods:
         df_losses = df_res.loc[df_res['method'] == method][['n_archetypes', 'loss']]
         analysis_archetypes = K_list #df_losses['n_archetypes'].unique().tolist()
-        
+
         all_losses = [df_losses.loc[df_losses['n_archetypes'] == e]['loss'].values for e in analysis_archetypes]
         analysis_archetypes = list(map(str, analysis_archetypes))
         losses = np.array([[e[-1] for e in loss] for loss in all_losses]) # n_archetypes x n_repeats array with losses at final iter
@@ -50,19 +62,44 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
         tmp = losses[losses == np.min(losses, axis=1)[:, None]]
         _, idx = np.unique(losses[losses == np.min(losses, axis=1)[:, None]], return_index=True)
         min_losses = tmp[np.sort(idx)]
+
         
-        add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
+        if method in ['AA','TSOAA']:
+            print(method)
 
-        for rep in range(losses.shape[1]):
-            add_curve(analysis_archetypes, losses[:, rep], is_min=False, method=method)
+            
+            ax2.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
+            # = add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
+            print(method,min_losses[0])
 
+            for rep in range(losses.shape[1]):
+                ax2.plot(analysis_archetypes, losses[:, rep], alpha=0.3, c=methods_colors[method])
+        
+        else:
+            ax.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
+            #ax.add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
+            print(method,min_losses[0])
+
+            for rep in range(losses.shape[1]):
+                ax.plot(analysis_archetypes, losses[:, rep], alpha=0.3, c=methods_colors[method])
     
-        plt.xticks(fontsize=20)
-        plt.yticks(fontsize=20)    
-        plt.xlabel('Number of archetypes', fontsize=25)
-        plt.ylabel('Loss', fontsize=25)
-        plt.legend(fontsize=25)
-    plt.show()
+
+    # Not sure what diff between minor and major is
+
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.tick_params(axis='both', which='minor', labelsize=20)
+
+    ax2.tick_params(axis='both', which='major', labelsize=20,colors = "#073B4C")
+    ax2.tick_params(axis='both', which='minor', labelsize=20)
+
+    #ax2.set_ylim[2000,11000]
+
+    ax2.spines['right'].set_color(methods_colors["AA"])
+    
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax2.legend(lines + lines2, labels + labels2, loc=0,fontsize=25)
+
 
 # loss_archetype_plot(df_res_20)
 
@@ -162,5 +199,76 @@ def plot_NMI_stability(folder_path, K_list, repetitions= 10):
     plt.show()
 
 
-            
+
+def hex_to_rgb(hex):
+     hex = hex.lstrip('#')
+     hlen = len(hex)
+     return tuple(int(hex[i:i+hlen//3], 16) for i in range(0, hlen, hlen//3))
+
+def adjust_color_lightness(r, g, b, factor):
+    h, l, s = rgb2hls(r / 255.0, g / 255.0, b / 255.0)
+    l = max(min(l * factor, 1.0), 0.0)
+    r, g, b = hls2rgb(h, l, s)
+    return rgb2hex(int(r * 255), int(g * 255), int(b * 255))
+
+def darken_color(r, g, b, factor=0.1):
+    return adjust_color_lightness(r, g, b, 1 - factor)
+
+
+def plot_archetypal_answers(X,archetypes,likert_text,questions,startColor, type = 'points'):
+
+    def transform_data(data, p):
+        likert_counts = pd.DataFrame(columns = range(1,p+1), index = np.arange(data.shape[0]))
+
+        for i in range(data.shape[0]):
+            likert_counts.iloc[i,(np.unique(data[i,:], return_counts=True)[0]-1)] = np.unique(data[i,:], return_counts=True)[1]
+
+        likert_counts = likert_counts.fillna(0)
+
+        return likert_counts
+    
+    likert_counts = transform_data(X, 5)
+
+    fig, ax = plt.subplots(figsize=(10,10))
+
+    ax.imshow(likert_counts.values,aspect='auto', cmap = 'Greys', alpha = 0.8)
+    cbar = ax.figure.colorbar(ax.imshow(likert_counts.values,aspect='auto', cmap = 'Greys', alpha = 0.8))
+
+    ax.set_xticks(np.arange(0,5))
+    ax.set_xticklabels(likert_text, rotation = 45)
+
+    ax.set_yticks(np.arange(0,likert_counts.shape[0]))
+    ax.set_yticklabels(questions)
+
+    y = np.arange(likert_counts.shape[0])
+
+    
+    color = []
+    color += [startColor]
+
+    ## make off set such that middle archetype is centered
+    center = (archetypes.shape[1])//2
+    offset = (np.arange(archetypes.shape[1])-center)*0.1
+    
+
+
+
+    for i in range(archetypes.shape[1]):
+        r, g, b  = hex_to_rgb(color[i])
+        color += [darken_color(r, g, b,0.5)]
+
+        if type == 'points':
+            ax.scatter(archetypes[:,i]-1+offset[i], y, lw=5., color=color[i],label = f'Archetype {i+1}')
+
+
+
+
+        else:
+            line = plt.Line2D(archetypes[:,i]-1, y, lw=5., color=color[i],label = f'Archetype {i+1}')
+            line.set_clip_on(False)
+            ax.add_line(line)
+
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
+          ncol=3, fancybox=True, shadow=True)
+         
 
