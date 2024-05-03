@@ -28,7 +28,6 @@ def load_analyses(analysis_dir: str):
             rep = int(file.split('_')[-1][-1])
             if f'K{K}' not in results[method].keys():
                 results[method][f'K{K}'] = {}
-            
             results[method][f'K{K}'][rep] = obj
     return results
 

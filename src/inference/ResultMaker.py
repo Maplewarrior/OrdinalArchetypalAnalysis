@@ -39,6 +39,8 @@ class ResultMaker:
         
         savefolder = self.data_params['savefolder']
         self.savedir = f'synthetic_results/{savefolder}'
+        self.data_savedir = f'SyntheticData/{savefolder}'
+
         if not os.path.exists(self.savedir):
             os.mkdir(self.savedir)
         
@@ -56,13 +58,13 @@ class ResultMaker:
         with open(f'{self.savedir}/{res_obj.type}_objects/{res_obj.type}_K={n_archetypes}_rep={repeat_num}', 'wb') as f:
             pickle.dump(res_obj, f, pickle.HIGHEST_PROTOCOL)
         
-        # # Save respondent weighting matrix
-        # A_savename = f'{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
-        # np.save(f'{self.savedir}/matrices/{A_savename}', res_obj.A)
+        # Save respondent weighting matrix
+        A_savename = f'{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
+        np.save(f'{self.savedir}/matrices/{A_savename}', res_obj.A)
 
-        # # Save archetype matrix (X@B = archetypes)
-        # B_savename = f'B_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
-        # np.save(f'{self.savedir}/matrices/{B_savename}', res_obj.B)
+        # Save archetype matrix (X@B = archetypes)
+        B_savename = f'B_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
+        np.save(f'{self.savedir}/matrices/{B_savename}', res_obj.B)
     
     def load_data(self, X_path: str, Z_path: str, A_path: str):
         _, X_ext = os.path.splitext(X_path)
@@ -86,6 +88,7 @@ class ResultMaker:
         elif X_ext == '.csv': # complex/naive OSM + OSM corrupted
             X = pd.read_csv(X_path, index_col=0).values
             self._X = X.T if X.shape[0] > X.shape[1] else X # M x N matrix
+            self.columns = [f'q{i}' for i in range(self._X.shape[0])]
             self.load_AZ_npy(Z_path, A_path)
 
         elif X_path == 'ESS8_GB': # load ESS8 subset 
@@ -96,7 +99,6 @@ class ResultMaker:
         
         elif X_ext == '.pkl':
             raise NotImplementedError()
-    
     
     def load_AZ_npy(self, Z_path: str, A_path:str):
         try: # for complex
@@ -119,16 +121,16 @@ class ResultMaker:
             self._A = AA._synthetic_data.A # extract weighting matrix
             ### Save synthetic data
 
-            # N = kwargs['N']
-            # dir = f'{N}_respondents_complex'
-            # if not os.path.exists(dir):
-            #     os.mkdir(dir)
+            dir = self.data_savedir
+            if not os.path.exists(dir):
+                os.mkdir(dir)
             
-            # np.save(f'{dir}/X.npy', self._X)
-            # np.save(f'{dir}/Z.npy',self._Z)
-            # np.save(f'{dir}/A.npy',self._A)
-            # with open(f'{dir}/data_parameters.json', 'w') as f:
-            #     json.dump(kwargs, f)
+            np.save(f'{dir}/X.npy', self._X)
+            np.save(f'{dir}/Z.npy',self._Z)
+            np.save(f'{dir}/A.npy',self._A)
+            with open(f'{dir}/data_parameters.json', 'w') as f:
+                json.dump(kwargs, f)
+            pdb.set_trace()
 
         else:
             self.load_data(kwargs['X_path'], kwargs['Z_path'], kwargs['A_path'])

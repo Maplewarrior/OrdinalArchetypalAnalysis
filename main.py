@@ -24,6 +24,8 @@ def mean_across_runs(filepath: str = 'results/test_run1.json'):
     # means = df_res.groupby(by=['method', 'with_init', 'beta_reg', 'alternating']).mean()
 
 def main():
+
+    #### COMPLEX PARAMETERS
     complex_data_params = {'N':1000, # irrelevant if load_data = True
                             'M':20, # irrelevant if load_data = True
                             'K':3, 
@@ -31,6 +33,19 @@ def main():
                             'rb': True,
                             'mute': True,
                             'savefolder': 'complex_results',
+                            'load_data': False, # whether to load X, A and Z matrices from below paths or to generate new synthetic data.
+                            'X_path': None, #'SyntheticData/1000_respondents/X.npy',
+                            'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
+                            'A_path': None #'SyntheticData/1000_respondents/A.npy'
+                            }
+    
+    complex_100Q_data_params = {'N':1000, # irrelevant if load_data = True
+                            'M':100, # irrelevant if load_data = True
+                            'K':3,
+                            'p':5, 
+                            'rb': True,
+                            'mute': True,
+                            'savefolder': 'complex_100Q_results',
                             'load_data': False, # whether to load X, A and Z matrices from below paths or to generate new synthetic data.
                             'X_path': None, #'SyntheticData/1000_respondents/X.npy',
                             'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
@@ -74,6 +89,7 @@ def main():
                                         'Z_path': 'SyntheticData/1000_respondents_complex/Z.npy',
                                         'A_path': 'SyntheticData/1000_respondents_complex/A.npy'}
 
+    #### NAIVE PARAMETERS
     naive_data_params = {'N':1000, # irrelevant if load_data = True
                         'M':20, # irrelevant if load_data = True
                         'K':3, 
@@ -121,7 +137,7 @@ def main():
                                        'X_path': 'SyntheticData/1000_respondents/OSM/data_naive_OSM_large_corrupted.csv',
                                        'Z_path': 'SyntheticData/1000_respondents/Data_naive_large.npy',
                                        'A_path': 'SyntheticData/1000_respondents/Data_naive_large.npy'}
-
+    #### ESS8 PARAMETERS
     ESS8_data_params = {'p': 6,
                         'mute': True,
                         'savefolder': 'ESS8_results',
@@ -137,32 +153,44 @@ def main():
                            'X_path': 'ESS8_GB',
                            'Z_path': None,
                            'A_path': None}
+    ##### NO RB parameters
+    no_RB_OSM_params = {'N':1000, # irrelevant if load_data = True
+                        'M':20, # irrelevant if load_data = True
+                        'K':3, 
+                        'p':5, 
+                        'rb': True,
+                        'mute': True,
+                        'savefolder': 'no_RB_OSM',
+                        'load_data': True,
+                        'X_path': 'SyntheticData/1000_respondents_noRB/OSM/no_RB_OSM.csv',
+                        'Z_path': 'SyntheticData/1000_respondents_noRB/Z.npy',
+                        'A_path': 'SyntheticData/1000_respondents_noRB/A.npy'}
     
-    TEST_DATA_PARAMS = {'N':1000, # irrelevant if load_data = True
-                            'M':20, # irrelevant if load_data = True
-                            'K':3, 
-                            'p':5, 
-                            'rb': True,
-                            'mute': True,
-                            'savefolder': 'TestMHA',
-                            'load_data': False, # whether to load X, A and Z matrices from below paths or to generate new synthetic data.
-                            'X_path': None, #'SyntheticData/1000_respondents/X.npy',
-                            'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
-                            'A_path': None #'SyntheticData/1000_respondents/A.npy'
-                            }
+    no_RB_OSM_corrupted_params = {'N':1000, # irrelevant if load_data = True
+                        'M':20, # irrelevant if load_data = True
+                        'K':3, 
+                        'p':5, 
+                        'rb': True,
+                        'mute': True,
+                        'savefolder': 'no_RB_OSM_corrupted',
+                        'load_data': True,
+                        'X_path': 'SyntheticData/1000_respondents_noRB/OSM/no_RB_OSM_corrupted.csv',
+                        'Z_path': 'SyntheticData/1000_respondents_noRB/Z.npy',
+                        'A_path': 'SyntheticData/1000_respondents_noRB/A.npy'}
 
+    #### MODEL OPTIONS
     model_options = {'method': ['OAA', 'RBOAA'],
                     'with_init': [True],
                     'alternating': [False],
                     'beta_reg': [True],
                     'n_archetypes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
                                      20, 30, 40, 50]}
-    # model_options_OSM = {'method': [''],
-    #                     'with_init': [True],
-    #                     'alternating': [False],
-    #                     'beta_reg': [True],
-    #                     'n_archetypes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-    #                                     20, 30, 40, 50]}
+    model_options_OSM = {'method': [''],
+                        'with_init': [True],
+                        'alternating': [False],
+                        'beta_reg': [True],
+                        'n_archetypes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                                        20, 30, 40, 50]}
     model_options_test = {'method': ['OAA', 'RBOAA'],
                         'with_init': [True],
                         'alternating': [False],
@@ -170,9 +198,9 @@ def main():
                         'n_archetypes': [1, 2, 3, 4, 5]}
     
     lrs = {} # hard coded for now
-    RM = ResultMaker(data_params=ESS8_data_params, model_options=model_options, lrs=lrs)
-    # RM.get_results()
-    RM.get_ESS8_results()
+    RM = ResultMaker(data_params=complex_100Q_data_params, model_options=model_options, lrs=lrs)
+    RM.get_results()
+    # RM.get_ESS8_results()
     # ALL_DATA_PARAMS = [complex_data_params, complex_corrupted_data_params, naive_data_params, naive_corrupted_data_params]
     # for d_params in ALL_DATA_PARAMS:
     #     print("\n\nRunning analysis with: ", d_params['savefolder'],"\n\n")
@@ -180,35 +208,18 @@ def main():
     #     RM.get_results()
 
 if __name__ == '__main__':
-    # from src.utils.filter_ESS8 import filter_ESS8_data
-    # df = filter_ESS8_data('RealData/ESS8_data.csv', only_GB=False)
-    # filepath = "results/test_runs.json"
-    # main(filepath=filepath)
+    # main()
+    from src.utils.synthetic_data_class import _synthetic_data
+    SD = _synthetic_data(1000, 20, 3, 5, -9.21, True, 1., 1.5, 1e-6)
+    betas = SD.betas
+    # A1 = np.ones((2, 2))
+    # A2 = np.zeros((2, 1))
+    # cat = np.concatenate((A2, A1), axis=1)
 
     
-    main()
-    
-    
-    # import numpy as np
-    # A = np.array([1, 2, 3])
-    # L = list(A)
     # pdb.set_trace()
-    # df = mean_across_runs('synthetic_results/naive_results/All_AA_results.json')
-    # df = mean_across_runs('synthetic_results/1000_all_combinations.json')
-    # print(df)
+    # cat[:, 0] += np.random.uniform(-0.05, 0.05, size=(2,))
+    # cat[:, -1] += np.random.uniform(-0.05, 0.05, size=(2,))
     
-    # data = np.load('SyntheticData/1000_respondents/Data_naive_large_corrupted.npz')
-    # X = data['arr_0']
-    
-    # tmp = np.load('SyntheticData/1000_respondents/Data_naive_large.npy', allow_pickle=False)
-    # t = tmp.tolist()
-    # df_naive = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large.csv', index_col=0)
-    # df_naive_c = pd.read_csv('SyntheticData/1000_respondents/OSM/data_naive_OSM_large_corrupted.csv', index_col=0)
-
-    # df_complex = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large.csv', index_col=0)
-    # df_complex_c = pd.read_csv('SyntheticData/1000_respondents_complex/OSM/data_complex_OSM_large_corrupted.csv', index_col=0)
-    # import multiprocessing
-    # print(multiprocessing.cpu_count())
-    # # pdb.set_trace()
 
 
