@@ -58,14 +58,6 @@ class ResultMaker:
         with open(f'{self.savedir}/{res_obj.type}_objects/{res_obj.type}_K={n_archetypes}_rep={repeat_num}', 'wb') as f:
             pickle.dump(res_obj, f, pickle.HIGHEST_PROTOCOL)
         
-        # Save respondent weighting matrix
-        A_savename = f'{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
-        np.save(f'{self.savedir}/matrices/{A_savename}', res_obj.A)
-
-        # Save archetype matrix (X@B = archetypes)
-        B_savename = f'B_{res_obj.type}_K={n_archetypes}_rep={repeat_num}'
-        np.save(f'{self.savedir}/matrices/{B_savename}', res_obj.B)
-    
     def load_data(self, X_path: str, Z_path: str, A_path: str):
         _, X_ext = os.path.splitext(X_path)
         
