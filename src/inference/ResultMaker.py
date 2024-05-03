@@ -75,7 +75,8 @@ class ResultMaker:
         elif X_ext == '.npz': # Naive/complex corrupted 
             data = np.load(X_path)
             self._X = data['arr_0']
-            self.load_AZ_npy(Z_path, A_path) # complex + naive handled
+            if A_path != None and Z_path != None:
+                self.load_AZ_npy(Z_path, A_path) # complex + naive handled
 
         elif X_ext == '.csv': # complex/naive OSM + OSM corrupted
             X = pd.read_csv(X_path, index_col=0).values
@@ -122,17 +123,18 @@ class ResultMaker:
             np.save(f'{dir}/A.npy',self._A)
             with open(f'{dir}/data_parameters.json', 'w') as f:
                 json.dump(kwargs, f)
-            pdb.set_trace()
-
+            
         else:
             self.load_data(kwargs['X_path'], kwargs['Z_path'], kwargs['A_path'])
         print("X", self._X.shape)
+
+        if not hasattr(self, 'columns'):
+            self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
         # print("A", self._A.shape)
         # print("Z", self._Z.shape)
         # assert list(self._X.shape) == [20, 1000], 'Shape mismatch for X!'
         # assert list(self._Z.shape) == [20, 3], 'Shape mismatch for X!'
         # assert list(self._A.shape) == [3, 1000], 'Shape mismatch for X!'
-        # self.columns = [f'q{i}' for i in range(1, self._X.shape[0]+1)]
         
     
     def make_analysis(self, results, run_specs, repeat_num: int):
