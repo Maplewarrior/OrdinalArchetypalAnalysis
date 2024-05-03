@@ -181,7 +181,7 @@ class _RBOAA:
             if not mute:
                 print("\nPerforming OAA for initialization of RBOAA.")
             OAA = _OAA()
-            _, A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, with_CAA_initialization=False, early_stopping = early_stopping, backup_itterations=backup_itterations, for_hotstart_usage=True,alternating=hotstart_alternating,beta_regulators=beta_regulators, seed=seed)
+            _, A_hot, B_hot, sigma_hot, b_hot, c1_hot, c2_hot = OAA._compute_archetypes(X, K, p, n_iter=n_iter, lr=lr, mute=mute, columns=columns, with_synthetic_data = with_synthetic_data, with_CAA_initialization=with_OAA_initialization, early_stopping = early_stopping, backup_itterations=backup_itterations, for_hotstart_usage=True,alternating=hotstart_alternating,beta_regulators=beta_regulators, seed=seed)
             A_non_constraint = A_hot.clone().detach().requires_grad_(True)
             B_non_constraint = B_hot.clone().detach().requires_grad_(True)
             b_non_constraint = b_hot.clone().detach().repeat(self.N,1).requires_grad_(True)
