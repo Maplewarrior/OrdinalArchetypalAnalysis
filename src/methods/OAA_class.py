@@ -225,7 +225,8 @@ class _OAA:
                 # A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
                 # B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
                 A_non_constraint, B_non_constraint = self._init_AB(seed=seed, K=K)
-            b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
+            b_non_constraint = torch.autograd.Variable(torch.ones(p), requires_grad=True) # MHA update --> equidistant when constrained
+            # b_non_constraint = torch.autograd.Variable(torch.rand(p), requires_grad=True)
             if sigma_cap:
                 sigma_non_constraint = torch.tensor(1e-3, requires_grad=False)
                 # sigma_non_constraint = torch.tensor(-1., requires_grad=False) # MHA sanity check

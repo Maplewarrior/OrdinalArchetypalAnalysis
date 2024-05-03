@@ -118,7 +118,7 @@ class _RBOAA:
     def _calculate_X_tilde(self,X,alphas):
         X_tilde = torch.gather(alphas,1,X-1)
         return X_tilde
-
+    
     ########## HELPER FUNCTION // X_hat ##########
     def _calculate_X_hat(self,X_tilde,A,B):
         Z = B @ X_tilde
@@ -206,7 +206,8 @@ class _RBOAA:
             # A_non_constraint = torch.autograd.Variable(torch.randn(self.N, K), requires_grad=True)
             # B_non_constraint = torch.autograd.Variable(torch.randn(K, self.N), requires_grad=True)
             A_non_constraint, B_non_constraint = self._init_AB(seed=seed, K=K)
-            b_non_constraint = torch.autograd.Variable(torch.rand(self.N, p), requires_grad=True)
+            b_non_constraint = torch.autograd.Variable(torch.ones(self.N, p), requires_grad=True) # MHA update --> equidistant after constraints at init.
+            # b_non_constraint = torch.autograd.Variable(torch.rand(self.N, p), requires_grad=True)
             c1_non_constraint = torch.autograd.Variable(torch.tensor([0.5414]).repeat(self.N,1), requires_grad=True)
             c2 = torch.autograd.Variable(torch.tensor([0.0]).repeat(self.N,1), requires_grad=True)
             if for_hotstart_usage:

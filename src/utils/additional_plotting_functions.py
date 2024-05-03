@@ -14,223 +14,20 @@ import matplotlib.pyplot as plt
 import itertools
 from src.utils.eval_measures import NMI, MCC
 
+# matplotlib.rcParams['mathtext.fontset'] = 'stix'
+# matplotlib.rcParams['font.family'] = 'STIXGeneral'
+### GLOBAL PARAMS
+my_pallette = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSOAA" : "#073B4C", "GT": "#7E99DC"}
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
-
-# TODO: Make some nice error handling for K_list. Would be nice to have a default value for K_list
-def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_complex_results.json',results_path2: str = None):
-    """
-    A plot over the final loss obtained as a function of the number of archetypes.
-    Parameters:
-        - results_path (str): Path to a .json results file created by running ResultMaker.get_results()
-    """
-
-    with open(f'{results_path}', 'r') as f:
-        result = json.load(f)
-        df_res = pd.DataFrame(result)
+matplotlib.rcParams['text.usetex'] = True # allow for latex axes
 
 
-    if results_path2:
-        with open(f'{results_path2}', 'r') as f:
-            result2 = json.load(f)
-            df_res2 = pd.DataFrame(result2)
-
-        df_res2.method = df_res2.method.replace({'CAA': 'TSAA'})    
-        df_res = pd.concat([df_res,df_res2])
-
-    df_res.method = df_res.method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'CAA': 'AA','TSAA': 'TSAA'})  
-
-    methods = df_res['method'].unique()
-
-    methods_colors = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSAA" : "#073B4C"}
-    #methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
-    fig, ax = plt.subplots(figsize = (15,5), layout='constrained')
-
-    def add_curve(analysis_archetypes, losses, is_min: bool, method: str):
-        if is_min:
-            plt.plot(analysis_archetypes, losses,"-o",c=methods_colors[method],label=f'{method}')
-        else:
-            # plt.scatter(analysis_archetypes, losses)
-            plt.plot(analysis_archetypes, losses, alpha=0.3, c=methods_colors[method])
-
-    ax.set_xlabel('Number of archetypes', fontsize=30)
-    ax.set_ylabel('Cross entropy loss', fontsize=30)
-    ax2 = ax.twinx()
-    ax2.set_ylabel('SSE',fontsize=30)
-
-    # TODO: Automatic set of ax2 ylim to avoid the two plots starting the same place something likemin = min(min_loss_AA, min_loss_TSOAA)*0.9 and max  = max(max_loss_AA, max_loss_TSOAA)*1.1
-    #ax2.set_ylim((np.min(df_res[df_res.method=='AA'].loss[-1])-1000,np.max(df_res[df_res.method=='TSAA'].loss[0])+1000))
-    #ax.set_ylim((np.min(df_res[df_res.method=='RBOAA'].loss[-1])-1000,np.max(df_res[df_res.method=='OAA'].loss[0])+1000))
-    
-    for method in methods:
-        df_losses = df_res.loc[df_res['method'] == method][['n_archetypes', 'loss']]
-        analysis_archetypes = K_list #df_losses['n_archetypes'].unique().tolist()
-
-        all_losses = [df_losses.loc[df_losses['n_archetypes'] == e]['loss'].values for e in analysis_archetypes]
-        analysis_archetypes = list(map(str, analysis_archetypes))
-        losses = np.array([[e[-1] for e in loss] for loss in all_losses]) # n_archetypes x n_repeats array with losses at final iter
-        
-        tmp = losses[losses == np.min(losses, axis=1)[:, None]]
-        _, idx = np.unique(losses[losses == np.min(losses, axis=1)[:, None]], return_index=True)
-        min_losses = tmp[np.sort(idx)]
-
-        print(str(method)+str(idx))
-        print(tmp)
-
-        
-        if method in ['AA','TSAA']:
-            
-            ax2.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
-            # = add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
-
-            for rep in range(losses.shape[1]):
-                ax2.plot(analysis_archetypes, losses[:, rep], alpha=0.3, c=methods_colors[method])
-        
-        else:
-            ax.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
-            #ax.add_curve(analysis_archetypes, min_losses, is_min=True, method=method)
-
-            for rep in range(losses.shape[1]):
-                ax.plot(analysis_archetypes, losses[:, rep], alpha=0.3, c=methods_colors[method])
-    
-
-    # Not sure what diff between minor and major is
-    ax.tick_params(axis='both', which='major', labelsize=25)
-    ax.tick_params(axis='both', which='minor', labelsize=25)
-
-    ax2.tick_params(axis='both', which='major', labelsize=25,colors = "#073B4C")
-    ax2.tick_params(axis='both', which='minor', labelsize=25)
-
-    #ax2.set_ylim[2500,11000]
-
-    ax2.spines['right'].set_color(methods_colors["AA"])
-    
-    lines, labels = ax.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax2.legend(lines + lines2, labels + labels2, loc=0,fontsize=30)
 
 
 # loss_archetype_plot(df_res_25)
 
-def NMI_archetypes(K_list, results_path: str = 'synthetic_results/1000_complex_results.json',results_path2: str = None):
-    """
-    A plot over the final loss obtained as a function of the number of archetypes
-    """
-    with open(f'{results_path}', 'r') as f:
-        result = json.load(f)
-        df_res = pd.DataFrame(result)
 
-    if results_path2:
-        with open(f'{results_path2}', 'r') as f:
-            result2 = json.load(f)
-            df_res2 = pd.DataFrame(result2)
-
-        df_res2.method = df_res2.method.replace({'CAA': 'TSAA'})    
-        df_res = pd.concat([df_res,df_res2])
-    df_res.method = df_res.method.replace({'RBOAA': 'RBOAA', 'OAA': 'OAA', 'CAA': 'AA','TSAA': 'TSAA'})  
-
-          
-    df_res = df_res[df_res['n_archetypes'].isin(K_list)]
-
-    methods = df_res['method'].unique()
-    #methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
-    methods_colors = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSAA" : "#073B4C"}
-    fig, ax = plt.subplots(1,1,figsize = (15,5), layout='constrained')
-
-    ax = sns.boxplot(x='n_archetypes', y="NMI", hue="method", showmeans=True, data=df_res,palette=methods_colors,meanprops={"marker": "s", "markerfacecolor": "white", "markeredgecolor": "black"})
-    ax.xaxis.grid(True, which='major')
-    [ax.axvline(x+.5,color='k') for x in ax.get_xticks()]
-    plt.xticks(fontsize=25)
-    plt.yticks(fontsize=25)    
-    ax.set_xlabel('Number of archetypes', fontsize=30)
-    ax.set_ylabel('NMI', fontsize=30)
-
-    ax.set_ylim([0,1.05])
-    plt.legend(fontsize=30,loc="upper right")
-
-
-
-K_list = [2,3,4,5,6,7,8,9,10]
-#TODO : Lots of room for improvement with dataloader
-def plot_NMI_stability(folder_path, K_list, repetitions= 10):
-    methods = ["CAA", "OAA", "RBOAA"]
-
-
-    test = itertools.combinations(range(repetitions), 2)
-    t = list(test)
-    calcIDX = np.array(t)
-
-    NMI_RBOAA_complex_large = np.zeros((len(K_list),len(calcIDX)))
-    NMI_OAA_complex_large = np.zeros((len(K_list),len(calcIDX)))
-    NMI_AA_complex_large = np.zeros((len(K_list),len(calcIDX)))
-
-    for method in methods:
-        for K in K_list:
-            for j in range(len(calcIDX)):
-                
-                filename1 = folder_path+"/A_"+str(method)+"_K="+str(K)+"_rep="+str(calcIDX[j,0])+".npy"
-                filename2 = folder_path+"/A_"+str(method)+"_K="+str(K)+"_rep="+str(calcIDX[j,1])+".npy"
-                file1 = np.load(filename1)
-                file2 = np.load(filename1)
-
-                if method == "RBOAA":
-                    NMI_RBOAA_complex_large[K-2,j] = NMI(file1,file2)
-
-                elif method == "OAA":
-                    NMI_OAA_complex_large[K-2,j] = NMI(file1,file2)
-
-                elif method == "CAA":
-                    NMI_AA_complex_large[K-2,j] = NMI(file1,file2)
-
-    df1 = pd.DataFrame(NMI_RBOAA_complex_large.T, columns = K_list)
-    df2 = pd.DataFrame(NMI_OAA_complex_large.T, columns = K_list)
-    df3 = pd.DataFrame(NMI_AA_complex_large.T, columns = K_list)
-
-    df1['Method'] = 'RBOAA'
-    df2['Method'] = 'OAA'
-    df3['Method'] = 'AA'
-
-    df1 = df1.melt(id_vars='Method', var_name='Archetypes', value_name='NMI')
-    df2 = df2.melt(id_vars='Method', var_name='Archetypes', value_name='NMI')
-    df3 = df3.melt(id_vars='Method', var_name='Archetypes', value_name='NMI')
-
-
-    df = pd.concat([df1,df2,df3])
-    df.Method = df.Method.replace({'OAA': 'OAA', 'RBOAA': 'RBOAA', 'AA': 'AA', 'CAA': 'AA'})
-
-        
-    methods = df['Method'].unique()
-    #methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
-    methods_colors = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSAA" : "#073B4C"}
-    fig, ax = plt.subplots(1,1,figsize = (15,5), layout='constrained')
-
-    ax = sns.boxplot(x='Archetypes', y="NMI", hue="Method", showmeans=True, data=df,palette=methods_colors,meanprops={"marker": "s", "markerfacecolor": "white", "markeredgecolor": "black"})
-    ax.xaxis.grid(True, which='major')
-    [ax.axvline(x+.5,color='k') for x in ax.get_xticks()]
-    plt.xticks(fontsize=25)
-    plt.yticks(fontsize=25)    
-    ax.set_xlabel('Number of archetypes', fontsize=30)
-    ax.set_ylabel('NMI', fontsize=30)
-
-    ax.set_ylim([0,1.05])
-    plt.legend(fontsize=30)
-    plt.show()
-
-
-
-def hex_to_rgb(hex):
-     hex = hex.lstrip('#')
-     hlen = len(hex)
-     return tuple(int(hex[i:i+hlen//3], 16) for i in range(0, hlen, hlen//3))
-
-def adjust_color_lightness(r, g, b, factor):
-    h, l, s = rgb2hls(r / 255.0, g / 255.0, b / 255.0)
-    l = max(min(l * factor, 1.0), 0.0)
-    r, g, b = hls2rgb(h, l, s)
-    return rgb2hex(int(r * 255), int(g * 255), int(b * 255))
-
-def darken_color(r, g, b, factor=0.1):
-    return adjust_color_lightness(r, g, b, 1 - factor)
 
 
 def plot_archetypal_answers(X,archetypes,likert_text,questions,startColor, type = 'points'):
@@ -289,4 +86,110 @@ def plot_archetypal_answers(X,archetypes,likert_text,questions,startColor, type 
     ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),
           ncol=3, fancybox=True, shadow=True)
          
+
+### Helper function for Response Bias Plot:
+def get_alphas_from_betas(X, RBOAA_betas, OAA_betas, synthetic_betas):
+    alpha_OAA = []
+    for j in range(len(OAA_betas)-1):
+        alpha_OAA += [(OAA_betas[j+1]+OAA_betas[j])/2]
+    
+    ### convert [0, 1]
+    alpha_OAA = np.array(alpha_OAA)
+    neg_mask = alpha_OAA < 0
+    one_mask = alpha_OAA > 1
+    alpha_OAA[neg_mask] = 0
+    alpha_OAA[one_mask] = 1
+    alpha_OAA = list(alpha_OAA)
+    
+    alpha = np.zeros([X.shape[1], len(OAA_betas) - 1])
+
+    for i in range(X.shape[1]):
+        for j in range(RBOAA_betas.shape[1]-1):
+            alpha_val = (RBOAA_betas[i,j+1]+RBOAA_betas[i,j])/2
+            ### constrain to [0, 1]
+            alpha_val = 1 if alpha_val > 1 else alpha_val
+            alpha_val = 0 if alpha_val < 0 else alpha_val
+            alpha[i,j] = alpha_val
+    
+    if synthetic_betas is not None:
+        if synthetic_betas.ndim > 1:
+            synthetic_alphas = np.empty((synthetic_betas.shape[0], synthetic_betas.shape[1]-1))
+
+            for i in range(synthetic_betas.shape[0]):
+                for j in range(synthetic_betas.shape[1]-1):
+                    synthetic_alphas[i, j] = (synthetic_betas[i,j] + synthetic_betas[i, j+1]) / 2
+        else:
+            synthetic_alphas = np.empty(synthetic_betas.shape[0]-1)
+            for j in range(synthetic_betas.shape[0] - 1):
+                synthetic_alphas[j] = (synthetic_betas[j] + synthetic_betas[j+1]) / 2
+    else:
+        synthetic_alphas = None
+                
+    return alpha_OAA, alpha, synthetic_alphas 
+
+def response_bias_plot(X, RBOAA_betas, OAA_betas, synthetic_betas=None):
+    """
+    X: M x N sized array
+    RBOAA_betas: N x p+1 array
+    OAA_betas: p+1 array
+    synthetic betas p+1 or N x p+1 array depending on if RB = False/True
+    """
+    r, g, b  = hex_to_rgb(my_pallette['OAA'])
+    OAA_color = [darken_color(r, g, b,0.5)]
+
+    alpha_OAA, alpha, synthetic_alphas = get_alphas_from_betas(X, RBOAA_betas, OAA_betas, synthetic_betas)
+
+    fig, ax = plt.subplots(1,1, figsize = (15,5), layout='constrained')
+    
+    ### plot RBOAA betas
+    if (synthetic_betas is not None) and (synthetic_betas.ndim > 1): # Synthetic analysis
+        if synthetic_betas.ndim > 1:
+            
+            method_colors = {'RBOAA': my_pallette['RBOAA'], 'Ground truth': my_pallette['GT']}
+            df1 = pd.DataFrame(synthetic_alphas, columns=[f'{i}' for i in range(1,6)])
+            df2 = pd.DataFrame(alpha, columns=[f'{i}' for i in range(1,6)])
+
+            df1.loc[:, 'Method'] = 'Ground truth'
+            df2.loc[:, 'Method'] = 'RBOAA'
+
+            df1 = df1.melt(id_vars='Method', var_name='Point', value_name='alpha')
+            df2 = df2.melt(id_vars='Method', var_name='Point', value_name='alpha')
+            df = pd.concat([df1, df2])
+
+            sns.boxplot(x='Point', y="alpha", hue="Method", showmeans=False, data=df, 
+                        palette=method_colors, meanprops={"marker": "s", "markerfacecolor": "white", "markeredgecolor": "black"})
+            
+    else: # Real data
+        medianprops = dict(linewidth=2.5, color=my_pallette['RBOAA'], size=500)
+        rboaa_res = ax.boxplot(alpha, medianprops=medianprops)
+        # plot ground truth
+        if synthetic_betas is not None:
+            gt_res = ax.scatter(x= ax.get_xticks(), y=synthetic_alphas, marker='X',s=170, color=my_pallette['GT'], label = 'Ground truth')
+    
+    oaa_res = ax.scatter(x= ax.get_xticks(), y=alpha_OAA,marker='X',s=170, color = OAA_color,label = 'OAA', zorder=10)
+    ax.xaxis.grid(True, which='major')
+    [ax.axvline(x+.5,color='k') for x in ax.get_xticks()]
+        
+    # print(df.Answer)
+    plt.xticks(fontsize=25)
+    plt.yticks(fontsize=25)    
+    ax.set_xlabel('Point on likert scale', fontsize=30)
+    ax.set_ylabel(r"$\alpha$", fontsize=30)
+
+    # likert_text = ['1. very much like me', '2. like me', '3. somewhat like me', '4. A little like me', '5. Not like me', '6. Not like me at all']
+    
+    # ax.set_xticklabels(likert_text, rotation = 15)
+    ax.set_ylim([0,1.05])
+
+    
+    dummy_boxplot_rboaa = plt.Line2D([0], [0], linestyle='-', color=my_pallette['RBOAA'], linewidth=2.5)
+    dummy_boxplot_gt = plt.Line2D([0], [0], linestyle='-', color=my_pallette['GT'], linewidth=2.5)
+    
+    if synthetic_betas is not None:
+        ax.legend([oaa_res, dummy_boxplot_rboaa, dummy_boxplot_gt], ['OAA', 'RBOAA', 'Ground truth'], fontsize=30, loc='upper left')
+    else:
+        ax.legend([oaa_res, dummy_boxplot_rboaa], ['OAA', 'RBOAA'], fontsize=30, loc='upper left')
+
+    plt.savefig("Plots_for_paper/RB_Complex.png",dpi=1000)
+
 
