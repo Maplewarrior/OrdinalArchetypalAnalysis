@@ -2,6 +2,7 @@ import numpy as np
 from scipy.stats import norm
 import pickle
 import torch
+import pdb
 
 ########## CLASS FOR CREATING SYNTHETIC DATA  ##########
 class _synthetic_data:
@@ -88,8 +89,6 @@ class _synthetic_data:
             for i in range(len(betas)-1):
                 alphas[i+1] = (betas[i] + betas[i+1]) / 2
         
-        import pdb
-        pdb.set_trace()    
         Z_ordinal = np.ceil(np.random.uniform(0, 1, size = (M,K))*p).astype(int)
         Z_alpha = alphas[Z_ordinal-1]
         
@@ -125,22 +124,22 @@ class _synthetic_data:
                 else:
                     D[j] = (betas[j-1] - X_rec)/(sigma.T+1e-16) ## Add softplus(sigma)
                     
-        else:
+        else: # betas are already padded
             J = len(betas[0,:])
-            D = np.empty((J+2, M, N))
-
+            D = np.empty((J, M, N))
+            
             # D = torch.rand(len(betas[0,:])+2,M,N)
             # D[0] = torch.tensor(np.matrix(np.ones((N)) * (-np.inf)))
             # D[-1] = torch.tensor(np.matrix(np.ones((N)) * (np.inf)))
             # D[1:-1] = torch.div(torch.unsqueeze(betas.T, 2).repeat(1,1,N)-X_rec.T,torch.unsqueeze(sigma+1e-16, 1).repeat(1,N))
             
-            for j in range(J+2):
+            for j in range(J):
                 if j == 0:
                     D[j] = np.ones((M,N))*(np.inf*(-1))
-                elif j == J+1:
+                elif j == J-1:
                     D[j] = np.ones((M,N))*(np.inf)
                 else:
-                    D[j] = (betas[:,j-1] - X_rec)/((sigma.T+1e-16)) ## Add softplus(sigma)
+                    D[j] = (betas[:,j] - X_rec)/((sigma.T+1e-16)) ## Add softplus(sigma)
                     # D[j] = torch.div((b[:,j-1] - X_hat[:, None]),sigma)[:,0,:].T
         
         return D - np.mean(D[1:-1])
@@ -180,9 +179,11 @@ class _synthetic_data:
         X_rec = Z_alpha@A
         
         D = self.get_D(X_rec, betas, self.softplus(sigma, sigma_std), rb=rb)
+        pdb.set_trace()
         probs = self.Probs(D)
         
         X_final = self.toCategorical(probs)
+        
         
         return X_final, Z_ordinal, Z_alpha, A, betas
 
