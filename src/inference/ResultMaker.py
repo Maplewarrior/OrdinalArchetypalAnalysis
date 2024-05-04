@@ -255,11 +255,9 @@ class ResultMaker:
         if run_specs['method'] == 'OAA':
             ### run OAA analysis
             OAA = _OAA()
-            # OAA_res = OAA._compute_archetypes(self._X, run_spects['n_archetypes], self.data_params['p'], self.n_iter, self.OAA_lr, mute=self.data_params['mute'], with_CAA_initialization=run_specs['with_init'],columns=self.columns, alternating=run_specs['alternating'], beta_regulators=run_specs['beta_reg'], early_stopping=self.early_stopping)
+            OAA_res = OAA._compute_archetypes(self._X, run_specs['n_archetypes'], self.data_params['p'], self.n_iter, self.OAA_lr, mute=self.data_params['mute'], with_CAA_initialization=run_specs['with_init'],columns=self.columns, alternating=run_specs['alternating'], beta_regulators=run_specs['beta_reg'], early_stopping=self.early_stopping)
             
             ### Hard code OAA_res to never do a CAA init
-            OAA_res = OAA._compute_archetypes(self._X, run_specs['n_archetypes'], self.data_params['p'], self.n_iter, self.OAA_lr, mute=self.data_params['mute'], with_CAA_initialization=False,columns=self.columns, alternating=run_specs['alternating'], beta_regulators=run_specs['beta_reg'], early_stopping=self.early_stopping, seed=repeat_num)
-            run_specs['with_init'] = False
             run_specs['loss'] = list(OAA_res.loss)
             self.save_result_obj(OAA_res, repeat_num, run_specs['n_archetypes'])
             self.update_results(results, run_specs) # update results
