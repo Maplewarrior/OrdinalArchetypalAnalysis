@@ -179,7 +179,7 @@ class _synthetic_data:
         X_rec = Z_alpha@A
         
         D = self.get_D(X_rec, betas, self.softplus(sigma, sigma_std), rb=rb)
-        pdb.set_trace()
+    
         probs = self.Probs(D)
         
         X_final = self.toCategorical(probs)

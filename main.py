@@ -64,6 +64,44 @@ def main():
                             'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
                             'A_path': None #'SyntheticData/1000_respondents/A.npy'
                             }
+    no_RB_20Q_data_params = {'N':1000, # irrelevant if load_data = True
+                            'M':20, # irrelevant if load_data = True
+                            'K':3,
+                            'p':5,
+                            'rb': False,
+                            'mute': True,
+                            'savefolder': 'noRB_20Q',
+                            'load_data': False, # whether to load X, A and Z matrices from below paths or to generate new synthetic data.
+                            'X_path': None, #'SyntheticData/1000_respondents/X.npy',
+                            'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
+                            'A_path': None #'SyntheticData/1000_respondents/A.npy'
+                            }
+    
+    RB_100Q_data_params = {'N':1000, # irrelevant if load_data = True
+                            'M':100, # irrelevant if load_data = True
+                            'K':3,
+                            'p':5,
+                            'rb': True,
+                            'mute': True,
+                            'savefolder': 'RB_100Q',
+                            'load_data': False, # whether to load X, A and Z matrices from below paths or to generate new synthetic data.
+                            'X_path': None, #'SyntheticData/1000_respondents/X.npy',
+                            'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
+                            'A_path': None #'SyntheticData/1000_respondents/A.npy'
+                            }
+    
+    RB_20Q_data_params = {'N':1000, # irrelevant if load_data = True
+                            'M':20, # irrelevant if load_data = True
+                            'K':3,
+                            'p':5,
+                            'rb': True,
+                            'mute': True,
+                            'savefolder': 'RB_20Q',
+                            'load_data': False, # whether to load X, A and Z matrices from below paths or to generate new synthetic data.
+                            'X_path': None, #'SyntheticData/1000_respondents/X.npy',
+                            'Z_path': None, #'SyntheticData/1000_respondents/Z.npy',
+                            'A_path': None #'SyntheticData/1000_respondents/A.npy'
+                            }
 
     complex_OSM_data_params = {
         'N':1000, # irrelevant if load_data = True
@@ -170,8 +208,9 @@ def main():
                         'beta_reg': [True],
                         'n_archetypes': [1, 2, 3, 4, 5]}
     
+
     lrs = {} # hard coded for now
-    RM = ResultMaker(data_params=ESS8_GB_corrupted_data_params, model_options=model_options, lrs=lrs)
+    RM = ResultMaker(data_params=no_RB_20Q_data_params, model_options=model_options, lrs=lrs)
     RM.get_results()
     # RM.get_ESS8_results()
     # ALL_DATA_PARAMS = [complex_data_params, complex_corrupted_data_params, naive_data_params, naive_corrupted_data_params]
@@ -186,6 +225,7 @@ if __name__ == '__main__':
     # from src.utils.synthetic_data_class import _synthetic_data
     # SD = _synthetic_data(1000, 20, 3, 5, -9.21, True, 1., 1.5, 1e-6)
     # betas = SD.betas
+
     
     #### Make AA_results.json object
     # from src.inference.utils import make_aa_results_json, load_analyses

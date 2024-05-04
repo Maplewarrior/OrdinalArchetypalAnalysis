@@ -1,1 +1,0 @@
-{"a_param": 1.0, "b_param": 2.0, "sigma": -9.21, "sigma_dev": 1e-06, "N": 1000, "M": 20, "K": 3, "p": 5, "rb": true, "mute": true, "load_data": false, "X_path": "SyntheticData/synthetic_data_naive_small.pkl", "Z_path": "SyntheticData/synthetic_data_naive.pkl", "A_path": null}
