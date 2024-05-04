@@ -104,7 +104,7 @@ class ResultMaker:
             self._A = t.A
             self._Z = t.Z
     
-    def make_synthetic_data(self, **kwargs):
+    def make_data(self, **kwargs):
         AA = AA_class()
         if kwargs['load_data'] == False:
             AA.create_synthetic_data(kwargs['N'], kwargs['M'], kwargs['K'], kwargs['p'], kwargs['sigma'], kwargs['rb'], kwargs['b_param'], kwargs['a_param'], kwargs['sigma_dev'],mute=kwargs['mute'])
@@ -210,7 +210,7 @@ class ResultMaker:
         b_param = hyperparams[2]
         sigma_dev = hyperparams[3]
         ### create synthetic data
-        self.make_synthetic_data(a_param=a_param, b_param=b_param, sigma=sigma, sigma_dev=sigma_dev, **self.data_params)
+        self.make_data(a_param=a_param, b_param=b_param, sigma=sigma, sigma_dev=sigma_dev, **self.data_params)
         results = self.results_init.copy()
         for method in self.model_options['method']:
             for beta_reg in self.model_options['beta_reg']:
@@ -287,7 +287,9 @@ class ResultMaker:
     
     def get_ESS8_results(self):
         results = self.results_ESS8_init.copy()
-        self.load_data(self.data_params['X_path'], None, None)
+        
+        self.make_data(**self.data_params)
+
         for method in self.model_options['method']:
             for beta_reg in self.model_options['beta_reg']:
                 for alternating in self.model_options['alternating']:
