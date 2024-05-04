@@ -24,31 +24,25 @@ class _synthetic_data:
     ########## CONTSTRAINTS ON THE RESPONSE BIAS BETAS ##########
     def betaConstraintsBias(self, betas):
         N, J = betas.shape
-        new_betas = np.ones((N,J+1))
-        betas = np.concatenate((np.zeros((N, 1)), betas), axis=1)
+        new_betas = np.empty((N,J))
+    
         denoms = np.sum(betas,axis=1)
         
         for i in range(N):
-            for j in range(J+1):
+            for j in range(J):
                 new_betas[i,j] = np.sum(betas[i,:j+1])/denoms[i]
-                
-        ### perturb tail boundaries with a small value
-        new_betas[:, 0] += np.random.uniform(-0.05, np.min(new_betas[:, 1]), size=(N,))
-        new_betas[:, -1] += np.random.uniform(-(1-np.max(new_betas[:, -2])), 0.05, size=(N,))
-        
-        assert all(new_betas[:, 0] < new_betas[:, 1]), 'Ordinal scale not preserved in synthetic data!'
-        assert all(new_betas[:, -1] > new_betas[:, -2]), 'Ordinal scale not preserved in synthetic data!'
-        return new_betas
+    
+        # Return and remove the column of ones
+        return new_betas[:,:-1]
     
     ########## CONSTRAINTS ON THE NON RESOPNS BIAS BETAS ##########
     def betaConstraints(self, betas):
    
        new_betas = np.empty(len(betas))
        denom = sum(betas)
-
        for i in range(len(new_betas)):
            new_betas[i] = np.sum(betas[:i+1]) / denom
-           
+   
        return new_betas[:-1]
    
     ########## SOFTPLUS HELPER FUNCTION ##########
@@ -71,31 +65,25 @@ class _synthetic_data:
         if b_param < 0.01:
             b_param = 0.01
         
-        if rb == True:
-            betas = self.biasedBetas(N=N, p=p, b_param=b_param)
-            betas = self.betaConstraintsBias(betas)
-            mu_betas = betas.mean(axis=0)
-            alphas = (mu_betas[1:] + mu_betas[:-1]) / 2
-
-
-        else:
-            betas = np.array([b_param]*p)
-            betas = self.betaConstraints(betas)
-            
-            alphas = np.empty(p)
-            alphas[0] = (0 + betas[0]) / 2
-            alphas[-1] = (1+ betas[-1]) / 2
-            for i in range(len(betas)-1):
-                alphas[i+1] = (betas[i] + betas[i+1]) / 2
+        betas = np.array([b_param]*p)
+        betas = self.betaConstraints(betas)
         
-        import pdb
-        pdb.set_trace()    
+        alphas = np.empty(p)
+        alphas[0] = (0 + betas[0]) / 2
+        alphas[-1] = (1+ betas[-1]) / 2
+        for i in range(len(betas)-1):
+            alphas[i+1] = (betas[i] + betas[i+1]) / 2
+        
         Z_ordinal = np.ceil(np.random.uniform(0, 1, size = (M,K))*p).astype(int)
         Z_alpha = alphas[Z_ordinal-1]
         
+        if rb == True:
+            betas = self.biasedBetas(N=N, p=p, b_param=b_param)
+            betas = self.betaConstraintsBias(betas)
+            
         return Z_ordinal, Z_alpha, betas
 
-    ########## HELPER FUNCTION, CALCULATES THE A - LINEAR COMBINATION MATRIX ##########
+    ########## HELPER FUNCTION, CALCULATES THE A LINEAZR COMBINATION MATRIX ##########
     def get_A(self, N, K, a_param):
         np.random.seed(42) # set another seed :)
         
@@ -108,7 +96,9 @@ class _synthetic_data:
     
     ########## HELPER FUNCTION, CALCULATES THE D DENSITY MATRIX ##########
     def get_D(self, X_rec, betas, sigma, rb):
+        
         M, N = X_rec.shape
+        
         
         if rb == False:
         
@@ -143,6 +133,13 @@ class _synthetic_data:
                     D[j] = (betas[:,j-1] - X_rec)/((sigma.T+1e-16)) ## Add softplus(sigma)
                     # D[j] = torch.div((b[:,j-1] - X_hat[:, None]),sigma)[:,0,:].T
         
+        # print("SHAPEEEE", D.shape)
+        # min = np.min(D[(D > -np.inf) & (D < np.inf)]) 
+        # max = np.max(D[(D > -np.inf) & (D < np.inf)])
+        # D[J+1] = np.ones((M,N))*(max + (max-min)/J)
+        # D[0] = np.ones((M,N))*(min - (max-min)/J)
+        # print("min, max:", min, max)
+        # print("D_0", D[0])
         return D - np.mean(D[1:-1])
 
     ########## HELPER FUNCTION, CALCULATES THE PROBABILITY FROM THE DENSITY MATRIX ##########
