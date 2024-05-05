@@ -2,6 +2,8 @@ import pickle
 import re
 import os
 import json
+from src.utils.eval_measures import NMI, MCC
+
 
 def load_result_obj(path: str):
     file = open(path,'rb')
@@ -31,12 +33,14 @@ def load_analyses(analysis_dir: str):
             results[method][f'K{K}'][rep] = obj
     return results
 
-def make_aa_results_json(analyses: dict, savename: str):
+def make_aa_results_json(analyses: dict, savename: str, A_true=None, Z_true=None):
     methods = []
     n_archetypes = []    
     with_init = []
     beta_reg = []
     losses = []
+    NMIs = []
+    MCCs = []
     
     possible_methods = ['RBOAA', 'OAA', 'CAA'] if 'OSM' not in savename else ['TSAA']
     for method in possible_methods:
@@ -46,14 +50,16 @@ def make_aa_results_json(analyses: dict, savename: str):
                 n_archetypes.append(K)
                 if method != 'CAA':
                     beta_reg.append(True)
+                    with_init.append(True)
                 else:
                     beta_reg.append(False)
-                
-                if method == 'RBOAA':
-                    with_init.append(True)
-                
-                else:
                     with_init.append(False)
+                
+                if A_true is not None:
+                    NMIs.append(NMI(analyses[method][f'K{K}'][rep].A), A_true)
+
+                if Z_true is not None:
+                    MCCs.append(MCC(analyses[method][f'K{K}'][rep].Z), Z_true)
                 
                 losses.append(list(analyses[method][f'K{K}'][rep].loss))
 
@@ -66,5 +72,7 @@ def make_aa_results_json(analyses: dict, savename: str):
                    'beta_reg': beta_reg,
                    'n_archetypes': n_archetypes,
                    'loss': losses}
+    
+    if 
     with open(savename, 'w') as f:
         json.dump(aa_res_dict, f)
