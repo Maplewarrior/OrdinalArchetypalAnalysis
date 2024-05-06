@@ -7,7 +7,7 @@ import numpy as np
 my_pallette = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSOAA" : "#073B4C", "GT": "#7E99DC"}
 matplotlib.rcParams['mathtext.fontset'] = 'stix'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
-matplotlib.rcParams['text.usetex'] = True # allow for latex axes
+#matplotlib.rcParams['text.usetex'] = True # allow for latex axes
 
 # TODO: Make some nice error handling for K_list. Would be nice to have a default value for K_list
 def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_complex_results.json',results_path2: str = None):
@@ -16,6 +16,10 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
     Parameters:
         - results_path (str): Path to a .json results file created by running ResultMaker.get_results()
     """
+
+    my_pallette = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSOAA" : "#073B4C", "GT": "#7E99DC"}
+    matplotlib.rcParams['mathtext.fontset'] = 'stix'
+    matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
     with open(f'{results_path}', 'r') as f:
         result = json.load(f)
