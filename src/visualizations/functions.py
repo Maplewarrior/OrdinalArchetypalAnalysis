@@ -1,5 +1,6 @@
 from colormap import rgb2hex, rgb2hls, hls2rgb
 import numpy as np
+import torch
 
 def hex_to_rgb(hex):
      hex = hex.lstrip('#')
@@ -55,3 +56,46 @@ def get_alphas_from_betas(X, RBOAA_betas, OAA_betas, synthetic_betas):
         synthetic_alphas = None
                 
     return alpha_OAA, alpha, synthetic_alphas 
+
+
+def _calculate_probRBOAA(Xt,X_hat,b,sigma):
+        z_next = (torch.gather(b,1,Xt)-X_hat)/sigma#[:,None]
+        z_prev = (torch.gather(b,1,Xt-1)-X_hat)/sigma #[:,None]
+        z_next[Xt == len(b[0,:])+1] = np.inf
+        z_prev[Xt == 1] = -np.inf
+        P_next = torch.distributions.normal.Normal(0, 1).cdf(z_next)
+        P_prev = torch.distributions.normal.Normal(0, 1).cdf(z_prev)
+        return P_next- P_prev
+        
+
+def _calculate_probOAA(Xt, X_hat, b, sigma):
+        z_next = (b[Xt] - X_hat)/sigma
+        z_prev = (b[Xt-1] - X_hat)/sigma
+        z_next[Xt == len(b)+1] = np.inf
+        z_prev[Xt == 1] = -np.inf
+        P_next = torch.distributions.normal.Normal(0, 1).cdf(z_next)
+        P_prev = torch.distributions.normal.Normal(0, 1).cdf(z_prev)
+        return P_next- P_prev
+
+        
+def findProb(data,method, i, j, p):
+    
+    X_hat = torch.tensor(data[method][f'K{i}'][j].X_hat)
+    Prob = torch.zeros(X_hat.shape)
+    b = torch.tensor(data[method][f'K{i}'][j].b)
+    sigma = torch.tensor(data[method][f'K{i}'][j].sigma)
+    R_est = torch.zeros(X_hat.shape)
+
+    for l in p:
+        Xt = torch.ones(X_hat.shape,dtype = int)*(int(l))
+
+        if method == 'OAA':
+            Prob = _calculate_probOAA(Xt, X_hat, b, sigma)
+
+        elif method == 'RBOAA':
+            Prob =  _calculate_probRBOAA(Xt,X_hat,b,sigma.T)
+                
+        R_est += Prob*l
+
+
+    return R_est
