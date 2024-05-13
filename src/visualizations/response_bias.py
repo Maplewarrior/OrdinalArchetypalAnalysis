@@ -33,7 +33,7 @@ def response_bias_plot(X, RBOAA_betasQ20, OAA_betasQ20,RBOAA_betasQ100, OAA_beta
     alpha_OAAQ20, alphaQ20, synthetic_alphas = get_alphas_from_betas(X, RBOAA_betasQ20, OAA_betasQ20, synthetic_betas)
     alpha_OAAQ100, alphaQ100, synthetic_alphas = get_alphas_from_betas(X, RBOAA_betasQ100, OAA_betasQ100, synthetic_betas)
 
-    fig, ax = plt.subplots(1,1, figsize = (5,10), layout='constrained')
+    fig, ax = plt.subplots(1,1, figsize = (5,8), layout='constrained')
     method_colors = {'RBOAA Q20': my_pallette['RBOAA'], 'RBOAA Q100': RBOAA_color ,'Ground truth':'b'}
     
     ### plot RBOAA betas
@@ -101,9 +101,9 @@ def response_bias_plot(X, RBOAA_betasQ20, OAA_betasQ20,RBOAA_betasQ100, OAA_beta
     
     if synthetic_betas is not None:
         #ax.legend([oaa_res,oaa_res2, dummy_boxplot_rboaaQ20,dummy_boxplot_rboaaQ100, dummy_boxplot_gt], ['OAA Q20','OAA Q100', 'RBOAA Q20','RBOAA Q100', 'Ground truth'], fontsize=30, loc='upper left')
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),ncol=2, fancybox=True, shadow=True,fontsize=15)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=2, fancybox=True, shadow=True,fontsize=15)
     
     else:
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.05),ncol=2, fancybox=True, shadow=True,fontsize=15)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15),ncol=2, fancybox=True, shadow=True,fontsize=15)
 
     plt.savefig("Plots_for_paper/"+plotname+".png",dpi=1000)
