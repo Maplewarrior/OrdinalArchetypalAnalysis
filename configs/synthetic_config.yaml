@@ -1,0 +1,66 @@
+data:
+  input_data_path: NA # path to X matrix
+  Z_path: # ground truth archetype matrix
+  A_path: # ground truth respondent weighting matrix
+  p: 6 # length of likert scale for non-synthetic data
+  do_corrupt: # whether or not to corrupt the X matrix
+  p_corrupt: 0.01 # probability of corrupting a ground truth response
+  use_synthetic_data: True # whether or not to use synthetic data
+  synthetic_data_params:
+    a_param: 
+      - 1
+    b_param: 
+      - 1.5
+    sigma: # ground truth sigma value prior to applying softplus.
+      - -9.21 
+    sigma_dev: # std. deviation in sigma value across respondents if response bias is present.
+      - 0.000001
+    N: 1000 # number of respondents
+    M: # number of questions
+    K: 3 # number of archetypes
+    rb: # whether or not to have response bias in the synthetic data
+    p: 5 # length of likert scale for synthetic data
+  results:
+    checkpoint_dir: results/.. # path to saving analyses
+    save_data: False # Whether or not to save the data used for the analysis
+    
+training:
+  CAA_lr: 0.1
+  OAA_lr: 0.01
+  RBOAA_lr: 0.01
+  early_stopping: True # whether or not to finish optimization prematurely as a result of convergence.
+  n_iter: 20000 # max number of optimization steps
+  n_repeats: 10 # how many times to repeat experiments.
+  mute: False
+  parameter_tuning:
+    method:
+      - CAA
+      - OAA
+      - RBOAA
+    with_init: 
+      - True
+    beta_regulators: 
+      - True
+    alternating: 
+      - False
+    n_archetypes:
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 20
+      - 30
+      - 40
+      - 50
+visualization:
+  save_dir: figures/..
+  OSM_result_dir: # path to TSAA analysis dir corresponding to checkpoint_dir under ["data"]["results"]
+  archetypal_answers_analysis: # which analysis to use for plotting archetypal answers
+    method: RBOAA
+    K: 3
+    rep: 2

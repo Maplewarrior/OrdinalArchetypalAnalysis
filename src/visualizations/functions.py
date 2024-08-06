@@ -1,5 +1,8 @@
 from colormap import rgb2hex, rgb2hls, hls2rgb
 import numpy as np
+import pickle
+import re
+import os
 import torch
 
 def hex_to_rgb(hex):
@@ -78,7 +81,7 @@ def _calculate_probOAA(Xt, X_hat, b, sigma):
         return P_next- P_prev
 
         
-def findProb(data,method, i, j, p):
+def findProb(data,method, i, j, p: int):
     
     X_hat = torch.tensor(data[method][f'K{i}'][j].X_hat)
     Prob = torch.zeros(X_hat.shape)
@@ -86,7 +89,7 @@ def findProb(data,method, i, j, p):
     sigma = torch.tensor(data[method][f'K{i}'][j].sigma)
     R_est = torch.zeros(X_hat.shape)
 
-    for l in p:
+    for l in range(1,p):
         Xt = torch.ones(X_hat.shape,dtype = int)*(int(l))
 
         if method == 'OAA':
@@ -99,3 +102,32 @@ def findProb(data,method, i, j, p):
 
 
     return R_est
+
+def load_result_obj(path: str):
+    file = open(path,'rb')
+    object_file = pickle.load(file)
+    file.close()
+    return object_file
+
+def load_analyses(analysis_dir: str):
+    """
+    Function that loads results from a given analysis.
+    The format is a nested dictionary on the form results[AA_method][n_archetypes][repetition_num]
+    The result objects saved have all matrices and parameters inside them. E
+    """
+
+    # results = {'RBOAA': {}, 'OAA': {}, 'CAA': {}} if 'OSM' not in analysis_dir else {'TSAA': {}}
+    results = {'RBOAA': {}, 'OAA': {}, 'CAA': {}, 'TSAA': {}} #if 'OSM' not in analysis_dir else {'TSAA': {}}
+
+    for method in results.keys():
+        method_dir = f'{analysis_dir}/{method}_objects'
+        all_files = os.listdir(method_dir)
+        for file in all_files:
+            obj = load_result_obj(f'{method_dir}/{file}')
+            K = re.sub('[^0-9]', '', file.split('_')[1])
+            rep = int(file.split('_')[-1][-1])
+            if f'K{K}' not in results[method].keys():
+                results[method][f'K{K}'] = {}
+            results[method][f'K{K}'][rep] = obj
+    
+    return results

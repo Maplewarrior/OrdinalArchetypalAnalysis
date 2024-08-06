@@ -39,7 +39,7 @@ class _CAA:
         return m(A)
     
     ########## COMPUTE ARCHETYPES FUNCTION OF CAA ##########
-    def _compute_archetypes(self, X, K, p, n_iter, lr, mute,columns,with_synthetic_data = False, early_stopping = False, for_hotstart_usage = False, seed=None):
+    def _compute_archetypes(self, X, K, p, n_iter, lr, mute,columns,with_synthetic_data = False, early_stopping = False, for_hotstart_usage = False, seed=None, analysis_type="CAA"):
         ########## INITIALIZATION ##########
         self.RSS = []
         start = timer()
@@ -75,7 +75,7 @@ class _CAA:
         X_hat_f = X@B_f@A_f
         end = timer()
         time = round(end-start,2)
-        result = _CAA_result(A_f, B_f, X, X_hat_f, n_iter, self.RSS, Z_f, K, p, time,columns,"CAA",with_synthetic_data = with_synthetic_data)
+        result = _CAA_result(A_f, B_f, X, X_hat_f, n_iter, self.RSS, Z_f, K, p, time,columns, analysis_type, with_synthetic_data = with_synthetic_data)
 
         if not mute:
             result._print()

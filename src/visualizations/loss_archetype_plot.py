@@ -10,21 +10,24 @@ matplotlib.rcParams['font.family'] = 'STIXGeneral'
 #matplotlib.rcParams['text.usetex'] = True # allow for latex axes
 
 # TODO: Make some nice error handling for K_list. Would be nice to have a default value for K_list
-def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_complex_results.json',results_path2: str = None):
+def loss_archetype_plot(K_list: list, 
+                        results_path: str,
+                        results_path2: str = None,
+                        methods_colors: dict = None,
+                        savedir: str = None):
     """
     A plot over the final loss obtained as a function of the number of archetypes.
     Parameters:
         - results_path (str): Path to a .json results file created by running ResultMaker.get_results()
     """
 
-    my_pallette = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSOAA" : "#073B4C", "GT": "#7E99DC"}
-    matplotlib.rcParams['mathtext.fontset'] = 'stix'
-    matplotlib.rcParams['font.family'] = 'STIXGeneral'
+    # my_pallette = {'RBOAA': "#EF476F", 'OAA': "#FFD166", 'AA': "#06D6A0","TSOAA" : "#073B4C", "GT": "#7E99DC"}
+    # matplotlib.rcParams['mathtext.fontset'] = 'stix'
+    # matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
     with open(f'{results_path}', 'r') as f:
         result = json.load(f)
         df_res = pd.DataFrame(result)
-
 
     if results_path2:
         with open(f'{results_path2}', 'r') as f:
@@ -42,12 +45,12 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
     #methods_colors = dict(zip(methods.tolist(), ["#EF476F", "#FFD166", "#06D6A0", "#073B4C"]))
     fig, ax = plt.subplots(figsize = (15,5), layout='constrained')
 
-    def add_curve(analysis_archetypes, losses, is_min: bool, method: str):
-        if is_min:
-            plt.plot(analysis_archetypes, losses,"-o",c=methods_colors[method],label=f'{method}')
-        else:
-            # plt.scatter(analysis_archetypes, losses)
-            plt.plot(analysis_archetypes, losses, alpha=0.3, c=methods_colors[method])
+    # def add_curve(analysis_archetypes, losses, is_min: bool, method: str):
+    #     if is_min:
+    #         plt.plot(analysis_archetypes, losses,"-o",c=methods_colors[method],label=f'{method}')
+    #     else:
+    #         # plt.scatter(analysis_archetypes, losses)
+    #         plt.plot(analysis_archetypes, losses, alpha=0.3, c=methods_colors[method])
 
     ax.set_xlabel('Number of archetypes', fontsize=30)
     ax.set_ylabel('Cross entropy loss', fontsize=30)
@@ -70,10 +73,7 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
         _, idx = np.unique(losses[losses == np.min(losses, axis=1)[:, None]], return_index=True)
         min_losses = tmp[np.sort(idx)]
 
-        print(str(method)+str(idx))
-        print(tmp)
 
-        
         if method in ['AA','TSAA']:
             
             ax2.plot(analysis_archetypes, min_losses,"-o",c=methods_colors[method],label=f'{method}')
@@ -97,10 +97,12 @@ def loss_archetype_plot(K_list, results_path: str = 'synthetic_results/1000_comp
     ax2.tick_params(axis='both', which='major', labelsize=25,colors = "#073B4C")
     ax2.tick_params(axis='both', which='minor', labelsize=25)
 
-    #ax2.set_ylim[2500,11000]
-
     ax2.spines['right'].set_color(methods_colors["AA"])
     
     lines, labels = ax.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax2.legend(lines + lines2, labels + labels2, loc=0,fontsize=30)
+
+    if savedir is not None:
+        plt.savefig(f'{savedir}/loss_archetype_plot.png', dpi=1000)
+
