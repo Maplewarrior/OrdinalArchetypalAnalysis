@@ -72,7 +72,6 @@ def response_bias_plot(X, RBOAA_betas, OAA_betas, p, savedir: str, my_pallette: 
     #ax.set_xticklabels(likert_text, rotation = 15)
     ax.set_xlim([-0.01,1.05])
 
-    
     # dummy_boxplot_rboaaQ20 = plt.Line2D([0], [0], linestyle='-', color=my_pallette['RBOAA'], linewidth=2.5)
     # dummy_boxplot_rboaaQ100 = plt.Line2D([0], [0], linestyle='-', color='r', linewidth=2.5)
     # dummy_boxplot_gt = plt.Line2D([0], [0], linestyle='-', color='b', linewidth=2.5)

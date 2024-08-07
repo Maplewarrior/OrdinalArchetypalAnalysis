@@ -1,5 +1,6 @@
 data:
   input_data_path: NA # path to X matrix
+  OSM_data_path: # path to OSM data corresponding to analysis
   Z_path: # ground truth archetype matrix
   A_path: # ground truth respondent weighting matrix
   p: 6 # length of likert scale for non-synthetic data
@@ -22,8 +23,6 @@ data:
     p: 5 # length of likert scale for synthetic data
   results:
     checkpoint_dir: results/.. # path to saving analyses
-    save_data: False # Whether or not to save the data used for the analysis
-    
 training:
   CAA_lr: 0.1
   OAA_lr: 0.01
@@ -35,6 +34,7 @@ training:
   parameter_tuning:
     method:
       - CAA
+      - TSAA
       - OAA
       - RBOAA
     with_init: 
@@ -59,8 +59,7 @@ training:
       - 50
 visualization:
   save_dir: figures/..
-  OSM_result_dir: # path to TSAA analysis dir corresponding to checkpoint_dir under ["data"]["results"]
-  archetypal_answers_analysis: # which analysis to use for plotting archetypal answers
+  run_specific_analysis: # which analysis to use for plotting archetypal answers
     method: RBOAA
     K: 3
     rep: 2

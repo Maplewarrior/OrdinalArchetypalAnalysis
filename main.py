@@ -1,6 +1,6 @@
 import argparse
 import json
-from src.inference.result_maker import ResultMaker
+from src.utils.result_maker import ResultMaker
 from src.utils.visualize_results import VisualizeResult
 from src.misc.read_config import load_config
 

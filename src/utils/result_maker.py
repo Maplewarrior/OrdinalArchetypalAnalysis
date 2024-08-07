@@ -8,7 +8,7 @@ import multiprocessing
 from src.utils.filter_ESS8 import filter_ESS8_data
 from src.utils.corruptData import corruptData
 from src.utils.synthetic_data_class import _synthetic_data
-from src.utils.synthetic_data_naive import synthetic_data_naive
+# from src.utils.synthetic_data_naive import synthetic_data_naive
 # from deprecated.AAM import AA as AA_class # TODO: Update this and synthetic data generation
 from src.utils.eval_measures import NMI, MCC
 from src.methods.CAA_class import _CAA

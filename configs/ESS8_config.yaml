@@ -44,15 +44,22 @@ training:
     alternating: 
       - False
     n_archetypes:
+      - 2
       - 3
       - 4
       - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 20
+      - 30
+      - 40
+      - 50
 visualization:
-  OSM_result_dir: # path to TSAA analysis dir corresponding to checkpoint_dir under ["data"]["results"]
   save_dir: figures/ESS8_GB
   run_specific_analysis: # which analysis to use for run-specific plots (archetypal answers and response bias plots).
     method: RBOAA
     K: 3
     rep: 2
-  
-  
