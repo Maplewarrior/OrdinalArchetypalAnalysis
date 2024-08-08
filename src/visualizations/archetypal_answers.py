@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from src.visualizations.functions import hex_to_rgb, darken_color
+from src.visualizations.functions import hex_to_rgb, darken_color, isNan
 
 def plot_archetypal_answers(X,archetypes, p: int, likert_text: list[str], questions: list[str], startColor, type = 'points', savepath: str = None):
 
@@ -11,7 +11,9 @@ def plot_archetypal_answers(X,archetypes, p: int, likert_text: list[str], questi
         for i in range(data.shape[0]):
             likert_counts.iloc[i,(np.unique(data[i,:], return_counts=True)[0]-1)] = np.unique(data[i,:], return_counts=True)[1]
 
-        likert_counts = likert_counts.fillna(0)
+        # replace nan values with 0
+        nan_mask = isNan(likert_counts.value_counts)
+        likert_counts[nan_mask] = 0
 
         return likert_counts
     

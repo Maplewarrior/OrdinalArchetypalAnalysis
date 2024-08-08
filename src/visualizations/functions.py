@@ -103,6 +103,9 @@ def findProb(data,method, i, j, p: int):
 
     return R_est
 
+def isNan(element):
+    return element != element
+
 def load_result_obj(path: str):
     file = open(path,'rb')
     object_file = pickle.load(file)
