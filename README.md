@@ -70,4 +70,4 @@ This work is authored by Anna Emilie J. Wedenborg, Michael A. Harborg, Andreas B
 
 
 ##  :lock: License
-This work falls under a MIT license. If you plan to use this codebase please ensure that your ... is compliant.
+This work has been given a MIT license.
